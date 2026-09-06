@@ -74,6 +74,7 @@ CREATE TABLE equivalents(
     nppa_ceiling_per_unit REAL NOT NULL,
     nppa_unit_basis TEXT NOT NULL,
     nppa_variant_basis TEXT NOT NULL,
+    nppa_nlem_version TEXT,
     jap_per_unit REAL NOT NULL,
     jap_pack_parsed TEXT NOT NULL,
     savings_pct REAL NOT NULL,
@@ -133,6 +134,53 @@ def _conv_pairs(pairs: tuple[str, ...]) -> tuple[str, ...] | None:
     return tuple(sorted(out))
 
 
+def _inj_plain_to_per_ml(strength: str) -> str | None:
+    """NPPA injection plain strength -> per-ml form ("10mg"->"10mg/ml").
+
+    Source-faithful for per-ml-priced rows (qualifier "(1 ML...)"): the
+    2022 vintage writes "INJECTION 10 MG" where 2015 wrote "10 mg/ml"
+    (dicyclomine ids 383/384 vs 44, acetylcysteine id 155 vs JAP 78).
+    Only single plain mg/iu/ku strengths convert; combos/%/existing /ml
+    never convert. DISCREPANCY (reported): the same "(1 ML)" qualifier
+    also prices large-volume infusions (e.g. Metronidazole 500mg total in
+    100ml) where plain means total, not concentration — those rows convert
+    too and their plain-plain family matches drop as correctness (measured:
+    only id 646 was matched, now correctly unmatched).
+    """
+    m = re.fullmatch(r"(.+?)(mg|iu|ku)", strength)
+    if not m:
+        return None
+    if "/ml" in strength:
+        return None
+    try:
+        float(m.group(1))
+    except ValueError:
+        return None
+    return f"{m.group(1)}{m.group(2)}/ml"
+
+
+_NLEM_RANK = {"2022": 0, "2015": 1, "2011": 2}
+
+
+def _nlem_rank(v: str | None) -> int:
+    """Latest NLEM wins (2022 > 2015 > 2011 > NULL/other)."""
+    if v is None:
+        return 3
+    return _NLEM_RANK.get(str(v).strip(), 3)
+
+
+def _pack_condition_kind(cond: str | None) -> str | None:
+    """Classify pack_condition_raw as less_than_10 / more_10 / None."""
+    if not cond:
+        return None
+    low = cond.casefold()
+    if "less than" in low and "10" in low:
+        return "less_than_10"
+    if "10" in low and "more" in low:
+        return "more_10"
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Canonical records
 # ---------------------------------------------------------------------------
@@ -182,6 +230,8 @@ class NppaCanon:
     conv_plain: str | None = None
     conv_alias: str | None = None
     low_confidence: bool = False
+    pack_condition_raw: str | None = None
+    nlem_version: str | None = None
 
 
 def _finalize_keys(
@@ -266,12 +316,22 @@ def _bind_nppa_strengths(
 def build_nppa_canonical(
     rows: list[tuple],
 ) -> tuple[list[NppaCanon], Counter]:
-    """Canonicalize NPPA rows; returns (records, exclusion-reason counts)."""
+    """Canonicalize NPPA rows; returns (records, exclusion-reason counts).
+
+    Rows are 8-tuples (legacy callers/tests) or 10-tuples with
+    (pack_condition_raw, nlem_version) appended (run_matching).
+    """
     records: list[NppaCanon] = []
     excluded: Counter = Counter()
     for r in rows:
-        (row_id, formulation_raw, form_raw, strength_raw, unit_type,
-         unit_count, pack_volume_ml, price_value) = r
+        if len(r) == 10:
+            (row_id, formulation_raw, form_raw, strength_raw, unit_type,
+             unit_count, pack_volume_ml, price_value, pack_cond,
+             nlem_ver) = r
+        else:
+            (row_id, formulation_raw, form_raw, strength_raw, unit_type,
+             unit_count, pack_volume_ml, price_value) = r
+            pack_cond, nlem_ver = None, None
         # Strength count is needed for conditional hyphen widening
         # ("Sulphadoxine -Pyrimethamine" splits only when 3 parts demand it).
         probe, _ = parse_strength_parts(strength_raw)
@@ -283,7 +343,8 @@ def build_nppa_canonical(
                 NppaCanon(row_id, formulation_raw, [], [], [], "unknown",
                           "unknown", (), unit_type, unit_count,
                           pack_volume_ml, price_value, False,
-                          "unparseable_molecule")
+                          "unparseable_molecule",
+                          pack_condition_raw=pack_cond, nlem_version=nlem_ver)
             )
             continue
         bound, reason = _bind_nppa_strengths(raw_mols, strength_raw)
@@ -292,7 +353,8 @@ def build_nppa_canonical(
             records.append(
                 NppaCanon(row_id, formulation_raw, [], [], [], "unknown",
                           "unknown", (), unit_type, unit_count,
-                          pack_volume_ml, price_value, False, reason)
+                          pack_volume_ml, price_value, False, reason,
+                          pack_condition_raw=pack_cond, nlem_version=nlem_ver)
             )
             continue
         form = canonical_form(form_raw)
@@ -301,11 +363,27 @@ def build_nppa_canonical(
         )
         mols_plain = canonical_molecules(raw_mols, use_alias=False)
         mols_alias = canonical_molecules(raw_mols, use_alias=True)
+        # Injection per-ml normalization (Phase 3.5 Defect B, DISCREPANCY
+        # reported): NPPA per-ml-priced plain strengths ("INJECTION 10 MG",
+        # qualifier "(1 ML...)") are concentrations ("10mg/ml"), matching
+        # the 2015 "10 mg/ml" vintage (dicyclomine 383/384 -> 10mg/ml,
+        # acetylcysteine 155 -> 200mg/ml). Single plain mg/iu/ku only;
+        # combos/% never convert. Replacement (not alternate) so all three
+        # dicyclomine rows share one key for variant selection; the one
+        # previously-matched plain-plain family row (Metronidazole 646)
+        # correctly drops (500mg total vs 500mg/ml are different).
+        if (form in ("injection", "infusion") and unit_type == "ml"
+                and (unit_count or 1.0) == 1.0 and len(bound) == 1):
+            conv = _inj_plain_to_per_ml(bound[0])
+            if conv is not None:
+                bound = [conv]
         kp, ka, cp, ca = _finalize_keys(mols_plain, mols_alias, bound, form)
         records.append(
             NppaCanon(row_id, formulation_raw, mols_plain, mols_alias, bound,
                       form, form_family(form), mods, unit_type, unit_count,
-                      pack_volume_ml, price_value, True, None, kp, ka, cp, ca)
+                      pack_volume_ml, price_value, True, None, kp, ka, cp, ca,
+                      low_confidence=False,
+                      pack_condition_raw=pack_cond, nlem_version=nlem_ver)
         )
     return records, excluded
 
@@ -553,30 +631,58 @@ _JAP_BASIS = {
 def _select_nppa_variant(
     cands: list[tuple[NppaCanon, str, float]], jap_kind: str,
     jap_volume: float | None,
-) -> tuple[NppaCanon, str, float, str]:
-    """Pick one NPPA row: exact volume -> same unit type -> per-unit row."""
-    scored: list[tuple[int, str, int, tuple]] = []
+) -> tuple[NppaCanon, str, float, str, str | None]:
+    """Pick one NPPA row (Phase 3.5 Defect B).
+
+    Order: exact pack volume wins first; then pack-condition match for
+    volume packs (JAP <10ml -> "Less than 10 ML", >=10ml -> "10 ML & more";
+    generic no-condition rows beat mismatched conditions); then same-unit
+    type / per-unit / fallback; ties broken by LATEST NLEM
+    (2022 > 2015 > 2011 > NULL) then lowest row id. Returns
+    (rec, basis, per_unit, label, nlem_version).
+    """
+    scored: list[tuple[tuple, str, tuple]] = []
     for rec, basis, per_unit in cands:
         if jap_volume is not None and rec.pack_volume_ml == jap_volume:
-            scored.append((0, "exact_volume", rec.row_id, (rec, basis,
-                                                           per_unit)))
-        elif ((jap_kind == "count" and basis == "count")
+            exact = 0
+        else:
+            exact = 1
+        # Pack-condition rank (only meaningful for volume packs; otherwise
+        # neutral so NLEM still breaks ties).
+        if jap_volume is None:
+            cond_rank = 1
+        else:
+            kind = _pack_condition_kind(rec.pack_condition_raw)
+            if kind is None:
+                cond_rank = 1  # generic row: beats mismatch, loses to match
+            elif ((jap_volume < 10 and kind == "less_than_10")
+                  or (jap_volume >= 10 and kind == "more_10")):
+                cond_rank = 0
+            else:
+                cond_rank = 2
+        if ((jap_kind == "count" and basis == "count")
               or (jap_kind == "volume_ml" and rec.unit_type == "ml")
               or (jap_kind == "dose_count" and rec.unit_type == "metered_dose")
               or (jap_kind == "weight_g" and basis == "g")
               or (jap_kind == "vial" and basis == "vial")):
-            scored.append((1, "same_unit_type", rec.row_id, (rec, basis,
-                                                             per_unit)))
+            unit_rank, unit_label = 0, "same_unit_type"
         elif ((jap_kind == "dose_count" and basis == "dose")
               or (jap_kind == "volume_ml" and basis == "ml")):
-            scored.append((2, "per_unit_row", rec.row_id, (rec, basis,
-                                                           per_unit)))
+            unit_rank, unit_label = 1, "per_unit_row"
         else:
-            scored.append((3, "fallback_unit", rec.row_id, (rec, basis,
-                                                            per_unit)))
-    scored.sort(key=lambda t: (t[0], t[2]))
-    _, label, _, (rec, basis, per_unit) = scored[0]
-    return rec, basis, per_unit, label
+            unit_rank, unit_label = 2, "fallback_unit"
+        if exact == 0:
+            label = "exact_volume"
+        elif cond_rank == 0:
+            label = "pack_condition_match"
+        else:
+            label = unit_label
+        key = (exact, cond_rank, unit_rank, _nlem_rank(rec.nlem_version),
+               rec.row_id)
+        scored.append((key, label, (rec, basis, per_unit)))
+    scored.sort(key=lambda t: t[0])
+    _, label, (rec, basis, per_unit) = scored[0]
+    return rec, basis, per_unit, label, rec.nlem_version
 
 
 def compute_equivalences(
@@ -617,12 +723,12 @@ def compute_equivalences(
                 excluded["excluded_basis_mismatch"] += 1
                 continue
             jap_vol = j.pack_value if j.pack_kind == "volume_ml" else None
-            n, nbasis, npu, label = _select_nppa_variant(
+            n, nbasis, npu, label, nlem = _select_nppa_variant(
                 cands, j.pack_kind, jap_vol)
             jap_pu = j.mrp / j.pack_value
             savings = (1.0 - jap_pu / npu) * 100.0 if npu else 0.0
             rows.append((
-                key, n.row_id, jap_id, npu, nbasis, label, jap_pu,
+                key, n.row_id, jap_id, npu, nbasis, label, nlem, jap_pu,
                 f"{j.pack_kind}:{_fmt(j.pack_value)}", savings,
                 m.method, m.confidence, computed_at,
             ))
@@ -654,8 +760,8 @@ def run_matching(db_path: str | Path) -> dict:
         ).fetchall()
         nppa_rows = conn.execute(
             "SELECT id, formulation_raw, form_raw, strength_raw, unit_type,"
-            " unit_count, pack_volume_ml, price_value"
-            " FROM nppa_ceiling_prices"
+            " unit_count, pack_volume_ml, price_value, pack_condition_raw,"
+            " nlem_version FROM nppa_ceiling_prices"
         ).fetchall()
 
         jap, jap_excluded = build_jap_canonical(
@@ -732,9 +838,9 @@ def run_matching(db_path: str | Path) -> dict:
         conn.executemany(
             "INSERT INTO equivalents(match_key, nppa_row_id, jap_product_id,"
             " nppa_ceiling_per_unit, nppa_unit_basis, nppa_variant_basis,"
-            " jap_per_unit, jap_pack_parsed, savings_pct, match_method,"
-            " confidence, computed_at)"
-            " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " nppa_nlem_version, jap_per_unit, jap_pack_parsed, savings_pct,"
+            " match_method, confidence, computed_at)"
+            " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             equiv_rows,
         )
 

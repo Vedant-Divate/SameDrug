@@ -101,7 +101,7 @@ def test_match_alias_combo_formoterol_per_dose():
         matches, {j.product_id: j for j in jap},
         {n.row_id: n for n in nppa}, "2026-01-01T00:00:00+00:00")
     assert len(rows) == 1
-    (out_key, nppa_id, jap_id, npu, basis, variant, jap_pu, pack,
+    (out_key, nppa_id, jap_id, npu, basis, variant, _nlem, jap_pu, pack,
      savings, method, conf, _) = rows[0]
     assert out_key == key and basis == "dose"
     assert nppa_id == 464  # Per Metered Dose row preferred over Per Dose
@@ -133,7 +133,7 @@ def test_match_per_ml_sodium_chloride_variant_selection():
         {n.row_id: n for n in nppa}, "2026-01-01T00:00:00+00:00")
     assert len(rows) == 1
     assert rows[0][4] == "ml" and rows[0][3] == pytest.approx(30.17 / 250.0)
-    assert rows[0][6] == pytest.approx(28.13 / 500.0)
+    assert rows[0][7] == pytest.approx(28.13 / 500.0)
 
 
 def test_wrong_match_guards_synthetic():
