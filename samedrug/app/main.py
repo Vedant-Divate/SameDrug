@@ -75,6 +75,22 @@ def create_app(db_path: str | Path = DEFAULT_DB_PATH) -> FastAPI:
                 queries.get_data_as_on(conn),
             )
 
+    @app.get("/api/equivalents/{match_key:path}")
+    def equivalents(match_key: str) -> dict[str, Any]:
+        """Ceiling-vs-JAP provenance for one canonical key (URL-encoded).
+
+        Cheapest equivalents row wins when a key has several. 404 with a
+        structured detail body when the key is unknown.
+        """
+        with queries.connect_ro(db_path) as conn:
+            payload = queries.get_equivalent(conn, match_key)
+            if payload is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail={"error": "unknown_match_key", "match_key": match_key},
+                )
+            return _envelope(payload, queries.get_data_as_on(conn))
+
     return app
 
 
