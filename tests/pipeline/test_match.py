@@ -155,6 +155,96 @@ def test_wrong_match_guards_synthetic():
     assert m.jap_ids == [9001] and m.nppa_ids == [8002]
 
 
+def test_cross_form_capsule_tablet_no_match_synthetic():
+    # Synthetic (labeled, Phase 3.5): capsule vs tablet must NOT match even
+    # with identical molecule+strength; same-form pairs still match.
+    jap, _ = build_jap_canonical([
+        (9011, "Testmol Tablets IP 10mg", "10's", 5.0),
+        (9012, "Testmol Capsules IP 10mg", "10's", 5.0),
+    ])
+    nppa, _ = build_nppa_canonical([
+        (8011, "TESTMOL", "TABLET", "10 MG", "tablet", 1.0, None, 1.0),
+        (8012, "TESTMOL", "CAPSULE", "10 MG", "capsule", 1.0, None, 1.0),
+    ])
+    assert all(j.ok for j in jap) and all(n.ok for n in nppa)
+    matches, _ = run_match(jap, nppa)
+    assert set(matches) == {"testmol:10mg|tablet", "testmol:10mg|capsule"}
+    assert matches["testmol:10mg|tablet"].jap_ids == [9011]
+    assert matches["testmol:10mg|tablet"].nppa_ids == [8011]
+    assert matches["testmol:10mg|capsule"].jap_ids == [9012]
+    assert matches["testmol:10mg|capsule"].nppa_ids == [8012]
+
+
+@needs_seeds
+def test_cross_form_real_doxycycline_capsule_matches_capsule():
+    # Real rows (Phase 3.5 Step-0): JAP 2392 Doxycycline Capsules must match
+    # NPPA 409 CAPSULE (Rs 3.15), never NPPA 408 TABLET (Rs 1.25).
+    _, _, matches = _match_pair([2392], [408, 409])
+    assert list(matches) == ["doxycycline:100mg|capsule"]
+    m = matches["doxycycline:100mg|capsule"]
+    assert m.nppa_ids == [409] and m.jap_ids == [2392]
+
+
+def _nppa_rows_full(conn, *ids):
+    rows = []
+    for i in ids:
+        r = conn.execute(
+            "SELECT id, formulation_raw, form_raw, strength_raw, unit_type,"
+            " unit_count, pack_volume_ml, price_value, pack_condition_raw,"
+            " nlem_version FROM nppa_ceiling_prices WHERE id = ?",
+            (i,),
+        ).fetchone()
+        assert r is not None, f"NPPA row {i} missing from seed DB"
+        rows.append(tuple(r))
+    return rows
+
+
+@needs_seeds
+def test_variant_selection_dicyclomine_real():
+    # Real rows (cited): JAP 2297 2ml ampoule (10mg per ml) with NPPA
+    # id 44 Rs 0.20 (2015, generic 1 ML) vs id 383 Rs 2.15
+    # (2022, 10 ML & more) vs id 384 Rs 3.40 (2022, Less than 10 ML).
+    # Correct variant for 2ml (<10ml): id 384, NLEM 2022, savings positive.
+    with _real_db() as conn:
+        jap, _ = build_jap_canonical(_jap_rows(conn, 2297))
+        nppa, _ = build_nppa_canonical(_nppa_rows_full(conn, 44, 383, 384))
+    assert all(j.ok for j in jap) and all(n.ok for n in nppa)
+    matches, _ = run_match(jap, nppa)
+    assert list(matches) == ["dicyclomine:10mg/ml|injection"]
+    rows, _ = compute_equivalences(
+        matches, {j.product_id: j for j in jap},
+        {n.row_id: n for n in nppa}, "2026-01-01T00:00:00+00:00")
+    assert len(rows) == 1
+    (key, nppa_id, jap_id, npu, basis, variant, nlem, jap_pu, pack,
+     savings, _method, _conf, _) = rows[0]
+    assert (nppa_id, jap_id) == (384, 2297)
+    assert nlem == "2022"
+    assert variant == "pack_condition_match"
+    assert npu == pytest.approx(3.40)
+    assert jap_pu == pytest.approx(3.75 / 2.0)
+    assert savings == pytest.approx((1 - (3.75 / 2.0) / 3.40) * 100.0)
+    assert savings > 0
+
+
+@needs_seeds
+def test_variant_selection_metoclopramide_generic_beats_mismatch():
+    # Real rows (cited): JAP 688 2ml ampoule with NPPA id 634 Rs 1.67
+    # (2022, 10 ML & more pack) vs id 635 Rs 2.74 (2022, generic 1 ML).
+    # For 2ml (<10ml) the bulk-pack condition mismatches, so the generic
+    # row wins (NLEM tie, condition decides).
+    with _real_db() as conn:
+        jap, _ = build_jap_canonical(_jap_rows(conn, 688))
+        nppa, _ = build_nppa_canonical(_nppa_rows_full(conn, 634, 635))
+    matches, _ = run_match(jap, nppa)
+    assert list(matches) == ["metoclopramide:5mg/ml|injection"]
+    rows, _ = compute_equivalences(
+        matches, {j.product_id: j for j in jap},
+        {n.row_id: n for n in nppa}, "2026-01-01T00:00:00+00:00")
+    assert len(rows) == 1
+    assert rows[0][1] == 635
+    assert rows[0][6] == "2022"
+
+
 @needs_seeds
 def test_full_build_equivalences_traceable_and_zero_mrp_free(tmp_path):
     """End-to-end on real seeds: raw tables frozen, equivalents non-empty,
