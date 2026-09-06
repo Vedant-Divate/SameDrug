@@ -18,7 +18,7 @@ def _meta(db_path: Path) -> dict[str, str]:
 def test_build_from_fixture_writes_rows_meta_and_rejects(tmp_path):
     db_path = tmp_path / "drugs.db"
     rejects_path = tmp_path / "rejects.csv"
-    stats = build_db(FIXTURE, db_path, rejects_path)
+    stats = build_db(FIXTURE, db_path, rejects_path, include_nppa=False)
 
     assert stats.total == 12
     assert stats.kept == 12
@@ -53,8 +53,8 @@ def test_build_from_fixture_writes_rows_meta_and_rejects(tmp_path):
 def test_rebuild_is_idempotent(tmp_path):
     db_path = tmp_path / "drugs.db"
     rejects_path = tmp_path / "rejects.csv"
-    build_db(FIXTURE, db_path, rejects_path)
-    build_db(FIXTURE, db_path, rejects_path)
+    build_db(FIXTURE, db_path, rejects_path, include_nppa=False)
+    build_db(FIXTURE, db_path, rejects_path, include_nppa=False)
 
     with sqlite3.connect(db_path) as conn:
         (count,) = conn.execute("SELECT COUNT(*) FROM jap_products").fetchone()
