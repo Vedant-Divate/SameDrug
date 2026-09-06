@@ -142,6 +142,9 @@ def home(request: Request):
         n_equiv_keys = conn.execute(
             "SELECT COUNT(DISTINCT match_key) FROM equivalents"
         ).fetchone()[0]
+    # Additive, read-only: the Phase-4 cached stats path (no per-render cost
+    # after the first call) feeds the home-page stats strip.
+    stats = queries.get_stats(ui["db_path"])
     return ui["templates"].TemplateResponse(
         request,
         "home.html",
@@ -149,6 +152,7 @@ def home(request: Request):
             **_base_context(request, data_as_on),
             "counts": counts,
             "n_equiv_keys": n_equiv_keys,
+            "stats": stats,
         },
     )
 

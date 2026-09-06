@@ -318,9 +318,34 @@ dd { margin: 0 0 var(--sp-2); }
 .provenance { margin-top: var(--sp-4); }
 .provenance p { margin: 0; font-size: var(--text-12); color: var(--muted); }
 
+/* 6. Home hero + stats strip */
+.hero { text-align: center; padding: var(--sp-8) 0 var(--sp-4); }
+.hero h1 { font-size: var(--text-28); margin: 0 0 var(--sp-2); }
+.hero .pitch { margin: 0 auto var(--sp-4); max-width: 36rem; }
+.search-hero { max-width: 36rem; margin: var(--sp-4) auto; text-align: left; }
+.search-hero input { font-size: var(--text-20); padding: var(--sp-3) var(--sp-4); }
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0;
+}
+.stat {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+  padding: var(--sp-3) var(--sp-4);
+  text-align: center;
+}
+.stat-value { display: block; font-size: var(--text-28); font-weight: 800; }
+.stat-date { font-size: var(--text-14); font-weight: 600; overflow-wrap: anywhere; }
+.stat-label { font-size: var(--text-12); color: var(--muted); }
+
 /* Desktop: two-column NPPA/JAP layout with a center divider. */
 @media (min-width: 48rem) {
   body { max-width: 60rem; }
+  .hero h1 { font-size: var(--text-40); }
   .price-grid {
     grid-template-columns: 1fr 1px 1fr;
     gap: 0 var(--sp-6);
@@ -328,6 +353,7 @@ dd { margin: 0 0 var(--sp-2); }
   }
   .price-divider { display: block; background: var(--line); }
   .side { border: none; padding: 0 var(--sp-1); }
+  .stats-strip { grid-template-columns: repeat(4, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {
