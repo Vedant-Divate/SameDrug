@@ -150,8 +150,10 @@ def test_clean_text_preserves_greek():
 FORM_GOLDENS: list[tuple[str, str, str]] = [
     ("TABLET", "tablet", "tablet"),
     ("Tablet", "tablet", "tablet"),
-    ("CAPSULE", "tablet", "tablet"),  # oral-solid merge per grammar contract
-    ("Capsule", "tablet", "tablet"),
+    ("CAPSULE", "capsule", "capsule"),  # Phase 3.5: distinct base (was collapse)
+    ("Capsule", "capsule", "capsule"),  # Phase 3.5: distinct base (was collapse)
+    ("CAPS", "capsule", "capsule"),  # Phase 3.5: short form is capsule
+    ("CAP", "capsule", "capsule"),  # Phase 3.5: short form is capsule
     ("INJECTION", "injection", "injectable"),
     ("Injection", "injection", "injectable"),
     ("POWDER FOR INJECTION", "injection", "injectable"),
@@ -171,6 +173,8 @@ FORM_GOLDENS: list[tuple[str, str, str]] = [
     ("OINTMENT", "ointment", "topical"),
     ("LOTION", "lotion", "topical"),
     ("MODIFIED RELEASE TABLET", "tablet", "tablet"),
+    ("MODIFIED RELEASE CAPSULE", "capsule", "capsule"),  # Phase 3.5: capsule base kept
+    ("ER CAPSULE", "capsule", "capsule"),  # Phase 3.5: capsule base kept (was tablet)
     ("EFFERVESCENT/ DISPERSIBLE/\nENTERIC COATED TABLET", "tablet", "tablet"),
     ("TABLET DT", "tablet", "tablet"),
     ("SUPPOSITORY", "suppository", "suppository"),

@@ -360,18 +360,20 @@ def parse_strength(s: str | None) -> tuple[str | None, str | None]:
 # ---------------------------------------------------------------------------
 
 _FORM_BASE: dict[str, str] = {
-    # Oral solids are merged per the Phase 3 grammar contract.
+    # Oral solids: capsule is DISTINCT from tablet (Phase 3.5 correctness:
+    # Step-0 audit of 22 cross-form rows found 22/22 faithful source
+    # capsule-vs-tablet labels, 0 parser mis-splits — the collapse was wrong).
     "tablet": "tablet",
     "tablets": "tablet",
     "tab": "tablet",
     "tabs": "tablet",
     "tabelts": "tablet",
     "tabets": "tablet",
-    "capulses": "tablet",
-    "cap": "tablet",
-    "caps": "tablet",
-    "capsule": "tablet",
-    "capsules": "tablet",
+    "capulses": "capsule",
+    "cap": "capsule",
+    "caps": "capsule",
+    "capsule": "capsule",
+    "capsules": "capsule",
     "chewable tablet": "tablet",
     "dispersible tablet": "tablet",
     "effervescent tablet": "tablet",
@@ -379,9 +381,9 @@ _FORM_BASE: dict[str, str] = {
     "tablet dt": "tablet",
     "tablet er": "tablet",
     "sr tablet": "tablet",
-    "er capsule": "tablet",
+    "er capsule": "capsule",
     "modified release tablet": "tablet",
-    "modified release capsule": "tablet",
+    "modified release capsule": "capsule",
     # Injectables.
     "injection": "injection",
     "injections": "injection",
