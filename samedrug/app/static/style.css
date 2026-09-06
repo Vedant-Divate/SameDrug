@@ -457,6 +457,34 @@ dd { margin: 0 0 var(--sp-2); }
 .bar-ceiling { background: var(--muted); }
 .bar-jap { background: var(--accent); }
 
+/* 7b. About story: ladder chart, savings histogram, exception callouts. */
+.story { margin: var(--sp-8) 0; }
+.story > p { color: var(--muted); }
+.ladder, .hist { display: grid; gap: var(--sp-2); margin: var(--sp-4) 0 var(--sp-2); }
+.ladder-row, .hist-row {
+  display: grid;
+  grid-template-columns: 9rem 1fr 3.5rem;
+  gap: var(--sp-3);
+  align-items: center;
+}
+.ladder-label, .hist-label { font-size: var(--text-14); font-weight: 600; }
+.ladder-count, .hist-count { font-size: var(--text-14); font-weight: 700; text-align: right; }
+.bar-ladder, .bar-hist { background: var(--accent); }
+.scale-line, .hist-total { font-size: var(--text-14); color: var(--muted); }
+.exception {
+  background: var(--warning-bg);
+  border: 1px solid var(--warn-line);
+  border-left-width: var(--sp-1);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3) var(--sp-4);
+  margin: var(--sp-3) 0;
+}
+.exception h3 { margin: 0 0 var(--sp-1); font-size: var(--text-16); }
+.exception p { margin: var(--sp-1) 0; font-size: var(--text-14); }
+@media (max-width: 30rem) {
+  .ladder-row, .hist-row { grid-template-columns: 7rem 1fr 3rem; gap: var(--sp-2); }
+}
+
 /* Desktop: two-column NPPA/JAP layout with a center divider. */
 @media (min-width: 48rem) {
   body { max-width: 60rem; }

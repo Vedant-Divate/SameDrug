@@ -3,6 +3,53 @@
 {% block content %}
 <h1>About SameDrug</h1>
 
+<section class="story" aria-label="How matching improved">
+  <h2>From 0 to {{ ladder[-1].value }}: the match ladder</h2>
+  <p>Each bar adds one matching technique over the previous — every count measured from the database, scale {{ ladder_total }} canonical NPPA keys.</p>
+  <div class="ladder">
+    {% for bar in ladder %}
+    <div class="ladder-row">
+      <span class="ladder-label">{{ bar.label }}</span>
+      <div class="bar-track"><div class="bar bar-ladder" style="width: {{ bar.pct }}%"></div></div>
+      <span class="ladder-count" data-ladder-count="{{ bar.value }}">{{ bar.value }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="scale-line">Scale: 0 – {{ ladder_total }} NPPA keys.</p>
+</section>
+
+<section class="story" aria-label="Savings distribution">
+  <h2>Savings across {{ hist_total }} comparisons</h2>
+  <p>Where the verified Jan Aushadhi savings fall, as percent below the NPPA ceiling.</p>
+  <div class="hist">
+    {% for b in histogram %}
+    <div class="hist-row">
+      <span class="hist-label">{{ b.label }}</span>
+      <div class="bar-track"><div class="bar bar-hist" style="width: {{ b.pct }}%"></div></div>
+      <span class="hist-count" data-hist-count="{{ b.count }}">{{ b.count }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="hist-total" data-hist-total="{{ hist_total }}">Buckets sum to {{ hist_total }} of {{ counts.equivalents }} equivalence rows.</p>
+</section>
+
+{% if exceptions %}
+<section class="story" aria-label="Known exceptions">
+  <h2>Known exceptions</h2>
+  {% for e in exceptions %}
+  <aside class="exception">
+    <h3>{{ e.title }}</h3>
+    <p>Jan Aushadhi {{ e.payload.jap_side.per_unit_inr|inr }} per unit vs NPPA ceiling {{ e.payload.nppa_side.ceiling_per_unit_inr|inr }} per unit ({{ e.payload.savings_pct|pct1 }}).</p>
+    {% if e.kind == "above_ceiling" %}
+    <p>Genuine finding: the Jan Aushadhi price sits above the ceiling here — kept visible rather than hidden.</p>
+    {% else %}
+    <p>Tax-basis note: ceilings are tax-exclusive while MRPs are tax-inclusive, so this gap may reflect tax rather than a real overcharge.</p>
+    {% endif %}
+  </aside>
+  {% endfor %}
+</section>
+{% endif %}
+
 <h2>Disclaimers</h2>
 <p><strong>Informational only — NOT medical advice.</strong> Always verify with a pharmacist or doctor before buying or switching medicines. A cheaper equivalent is not automatically suitable for you.</p>
 <p>Ceiling prices © NPPA; Jan Aushadhi prices © PMBJP. SameDrug is not affiliated with either body. NPPA ceilings are tax-exclusive while Jan Aushadhi MRPs are tax-inclusive, so small differences may reflect tax, not real savings.</p>

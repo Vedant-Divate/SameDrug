@@ -80,6 +80,77 @@ def plain_caveat(code: str) -> str:
     return CAVEAT_TEXT.get(code.split(":")[0], code)
 
 
+# Savings buckets for the /about histogram (labels only; counts are measured).
+HISTOGRAM_BUCKETS = (
+    ("le0", "\u22640%"),
+    ("0-30", "0\u201330%"),
+    ("30-60", "30\u201360%"),
+    ("60-80", "60\u201380%"),
+    ("gt80", ">80%"),
+)
+
+# Canonical keys with genuine negative-savings findings (sources.md addendum).
+# Rendered on /about only when present in the DB under test (real DB: both).
+EXCEPTION_KEYS = (
+    ("pheniramine:22.75mg|injection", "above_ceiling"),
+    ("dexamethasone:4mg/ml|injection", "tax_basis"),
+)
+
+
+def savings_histogram(conn) -> list[dict[str, Any]]:
+    """One GROUP BY query: savings buckets over equivalents (for /about).
+
+    Bucket edges (<=0, 0-30, 30-60, 60-80, >80 %) mirror the story on the
+    page; the bucket counts always sum to the equivalents total.
+    """
+    rows = conn.execute(
+        "SELECT CASE WHEN savings_pct <= 0 THEN 'le0'"
+        " WHEN savings_pct <= 30 THEN '0-30'"
+        " WHEN savings_pct <= 60 THEN '30-60'"
+        " WHEN savings_pct <= 80 THEN '60-80'"
+        " ELSE 'gt80' END AS bucket, COUNT(*) AS n"
+        " FROM equivalents GROUP BY bucket"
+    ).fetchall()
+    counts = {r["bucket"]: r["n"] for r in rows}
+    total = sum(counts.values())
+    out = []
+    for key, label in HISTOGRAM_BUCKETS:
+        n = counts.get(key, 0)
+        out.append(
+            {
+                "key": key,
+                "label": label,
+                "count": n,
+                "pct": round(100.0 * n / total, 1) if total else 0.0,
+            }
+        )
+    return out
+
+
+def match_ladder(stats: dict[str, Any]) -> tuple[list[dict[str, Any]], int]:
+    """Cumulative ladder bars from the cached stats query (for /about).
+
+    Per-stage increments (exact / alias / fuzzy / form-family) accumulate
+    into the matched total; the scale is the total NPPA key denominator.
+    """
+    cfg = stats["match_ladder"]
+    s1 = cfg["stage_1_exact"]
+    s2 = cfg["stage_2_alias"]
+    s3 = cfg["stage_3_fuzzy"]
+    matched = cfg["matched_keys"]
+    total = cfg["total_nppa_keys"]
+    bars = [
+        {"label": "Naive baseline", "value": 0},
+        {"label": "Exact", "value": s1},
+        {"label": "+ Alias", "value": s1 + s2},
+        {"label": "+ Fuzzy", "value": s1 + s2 + s3},
+        {"label": "+ Form family", "value": matched},
+    ]
+    for bar in bars:
+        bar["pct"] = round(100.0 * bar["value"] / total, 1) if total else 0.0
+    return bars, total
+
+
 def format_inr(value: float | None) -> str:
     """Display rounding: exactly 2 decimals (0.6559999 -> \u20b90.66)."""
     return f"\u20b9{float(value):.2f}"
@@ -254,6 +325,25 @@ def about(request: Request):
     with queries.connect_ro(ui["db_path"]) as conn:
         data_as_on = queries.get_data_as_on(conn)
         counts = queries.table_counts(conn)
+        histogram = savings_histogram(conn)
+        exceptions = []
+        for key, kind in EXCEPTION_KEYS:
+            payload = queries.get_equivalent(conn, key)
+            if payload is not None:
+                exceptions.append(
+                    {
+                        "kind": kind,
+                        "payload": payload,
+                        "title": display_name(
+                            payload["molecules"],
+                            payload["strength_set"],
+                            payload["form"],
+                        ),
+                    }
+                )
+    # Additive, read-only: the Phase-4 cached stats path feeds the ladder.
+    stats = queries.get_stats(ui["db_path"])
+    ladder, ladder_total = match_ladder(stats)
     return ui["templates"].TemplateResponse(
         request,
         "about.html",
@@ -262,5 +352,10 @@ def about(request: Request):
             "counts": counts,
             "slug_collisions": request.app.state.slug_collisions,
             "n_slugs": len(request.app.state.slug_to_key),
+            "ladder": ladder,
+            "ladder_total": ladder_total,
+            "histogram": histogram,
+            "hist_total": sum(b["count"] for b in histogram),
+            "exceptions": exceptions,
         },
     )
