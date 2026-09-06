@@ -106,7 +106,17 @@
       if (!box.contains(ev.target) && ev.target !== input) close();
     });
   });
-  /* 4. Smooth-scroll guard: in-page anchors only, off under reduced motion. */
+  /* 5. Print button: created only with JS (absent without), hidden in print. */
+  document.querySelectorAll(".card .title-row").forEach(function (row) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "copy-link";
+    btn.setAttribute("data-print", "");
+    btn.textContent = "Print";
+    btn.addEventListener("click", function () { window.print(); });
+    row.appendChild(btn);
+  });
+  /* 6. Smooth-scroll guard: in-page anchors only, off under reduced motion. */
   if (!reduceMotion) {
     document.querySelectorAll('a[href^="#"]').forEach(function (a) {
       a.addEventListener("click", function (ev) {

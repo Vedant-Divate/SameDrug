@@ -69,5 +69,9 @@
   <footer class="provenance">
     <p><small>NPPA {{ payload.nppa_side.source_row }} &middot; SO {{ payload.nppa_side.so_number }} ({{ payload.nppa_side.source_file }}) &middot; Jan Aushadhi product_id {{ payload.jap_side.product_id }} &middot; drug_code {{ payload.jap_side.drug_code }}{% if data_as_on %} &middot; Data as on {{ data_as_on }}{% endif %}</small></p>
   </footer>
+  <div class="print-only" aria-hidden="true">
+    <p>{{ title }} — NPPA ceiling {{ payload.nppa_side.ceiling_per_unit_inr|inr }} per unit; Jan Aushadhi {{ payload.jap_side.per_unit_inr|inr }} per unit ({{ payload.jap_side.pack_raw }}, MRP {{ payload.jap_side.mrp|inr }} per pack); {{ hero }}.</p>
+    <p>Please verify with your pharmacist before buying or switching medicines.</p>
+  </div>
 </article>
 {% endblock %}

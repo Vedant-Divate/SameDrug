@@ -485,6 +485,41 @@ dd { margin: 0 0 var(--sp-2); }
   .ladder-row, .hist-row { grid-template-columns: 7rem 1fr 3rem; gap: var(--sp-2); }
 }
 
+/* 7c. Illustrated empty states (no-results + 404). */
+.empty-state { text-align: center; margin: var(--sp-8) auto; max-width: 30rem; }
+.empty-art { width: 120px; height: 96px; color: var(--muted); }
+.try-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); justify-content: center; align-items: center; }
+.chip {
+  display: inline-block;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--raised);
+  padding: var(--sp-1) var(--sp-3);
+  font-size: var(--text-14);
+  color: var(--accent);
+  text-decoration: none;
+}
+.chip:hover { box-shadow: var(--shadow-1); }
+
+/* 7d. Print stylesheet (card pages): black-on-white, prices/pack/savings/
+ * provenance plus the pharmacist line stay; all chrome and buttons go. */
+.print-only { display: none; }
+@media print {
+  body { background: #fff; color: #000; max-width: none; }
+  .navbar, .site-footer, .copy-link, .theme-toggle, .share-hint,
+  .search-box button, .suggest-list { display: none; }
+  .card, .side, .stat, .exception { box-shadow: none; background: #fff; border-color: #000; }
+  .savings-positive, .savings-negative { background: #fff; border-color: #000; }
+  .savings-positive .savings-value, .savings-negative .savings-value,
+  .price, .price .per, .match-line, .provenance p,
+  dt, dd, .bar-label { color: #000; }
+  a { color: #000; text-decoration: none; }
+  .card, .bars, .caveats { animation: none; }
+  .bar, .bar-ceiling, .bar-jap, .bar-ladder, .bar-hist { animation: none; background: #000; }
+  .print-only { display: block; }
+  .print-only p { color: #000; font-size: var(--text-14); }
+}
+
 /* Desktop: two-column NPPA/JAP layout with a center divider. */
 @media (min-width: 48rem) {
   body { max-width: 60rem; }
