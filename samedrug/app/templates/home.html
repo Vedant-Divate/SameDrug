@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}SameDrug — compare ceiling prices with Jan Aushadhi{% endblock %}
+{% block content %}
+<h1>Same drug? Same price? Check.</h1>
+<p class="pitch">Compare NPPA ceiling prices with Jan Aushadhi equivalents — every price traceable to source.</p>
+<form class="search-box" action="/search" method="get">
+  <label for="q">Search a molecule (e.g. paracetamol)</label>
+  <input id="q" name="q" type="search" minlength="2" required placeholder="paracetamol" autocomplete="off">
+  <button type="submit">Search</button>
+</form>
+<section class="db-note">
+  <p>Covering {{ counts.canonical_formulations }} formulations: {{ n_equiv_keys }} with a Jan Aushadhi equivalent, {{ counts.jap_products }} Jan Aushadhi products, {{ counts.nppa_ceiling_prices }} NPPA ceiling rows.</p>
+</section>
+{% endblock %}

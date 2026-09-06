@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — SameDrug{% endblock %}
+{% block og %}
+<meta property="og:title" content="{{ og_title }}">
+<meta property="og:description" content="{{ og_description }}">
+<meta property="og:type" content="website">
+{% endblock %}
+{% block content %}
+<article class="card"
+  data-match-key="{{ payload.match_key }}"
+  data-ceiling="{{ ceiling_raw }}"
+  data-jap-per-unit="{{ jap_raw }}"
+  data-savings="{{ savings_raw }}"
+  data-mrp="{{ mrp_raw }}">
+  <h1>{{ title }}</h1>
+  <p class="savings-hero">{{ hero }}</p>
+
+  <div class="price-grid">
+    <section class="side nppa">
+      <h2>NPPA ceiling</h2>
+      <p class="price">{{ payload.nppa_side.ceiling_per_unit_inr|inr }} <span class="per">per unit</span></p>
+      <dl>
+        <dt>Unit basis</dt><dd>{{ payload.nppa_side.unit_basis }} ({{ payload.nppa_side.qualifier_raw }})</dd>
+        <dt>NLEM version</dt><dd>{{ payload.nppa_side.nlem_version }}</dd>
+        <dt>Price order</dt><dd>SO {{ payload.nppa_side.so_number }}, dated {{ payload.nppa_side.so_date }}</dd>
+      </dl>
+    </section>
+    <section class="side jap">
+      <h2>Jan Aushadhi</h2>
+      <p class="price">{{ payload.jap_side.per_unit_inr|inr }} <span class="per">per unit</span></p>
+      <dl>
+        <dt>Product</dt><dd>{{ payload.jap_side.generic_name }}</dd>
+        <dt>Pack</dt><dd>{{ payload.jap_side.pack_raw }} (parsed: {{ payload.jap_side.pack_parsed }})</dd>
+        <dt>MRP</dt><dd>{{ payload.jap_side.mrp|inr }} per pack</dd>
+      </dl>
+    </section>
+  </div>
+
+  <p class="match-line">
+    <span class="badge method">{{ payload.match_method }} match</span>
+    <span class="badge conf-{{ payload.confidence }}">{{ payload.confidence }} confidence</span>
+  </p>
+
+  {% if caveats_plain %}
+  <section class="caveats">
+    <h2>Please note</h2>
+    <ul class="warning-list">
+      {% for c in caveats_plain %}
+      <li>{{ c }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  <footer class="provenance">
+    <h2>Provenance — every price traceable to source</h2>
+    <ul>
+      <li>NPPA: {{ payload.nppa_side.source_row }}, SO {{ payload.nppa_side.so_number }} ({{ payload.nppa_side.source_file }})</li>
+      <li>Jan Aushadhi: product_id {{ payload.jap_side.product_id }}, drug_code {{ payload.jap_side.drug_code }}</li>
+      {% if data_as_on %}<li>Data as on {{ data_as_on }}</li>{% endif %}
+    </ul>
+  </footer>
+</article>
+{% endblock %}

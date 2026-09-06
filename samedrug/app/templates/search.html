@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{% if query %}Results for “{{ query }}” — SameDrug{% else %}Search — SameDrug{% endif %}{% endblock %}
+{% block content %}
+<h1>Search</h1>
+<form class="search-box" action="/search" method="get">
+  <label for="q">Search a molecule</label>
+  <input id="q" name="q" type="search" minlength="2" required value="{{ query }}" placeholder="paracetamol" autocomplete="off">
+  <button type="submit">Search</button>
+</form>
+
+{% if too_short %}
+<p class="notice">Enter at least 2 characters to search.</p>
+{% else %}
+  {% if main_results %}
+  <h2>Results ({{ main_results|length }})</h2>
+  <ul class="results">
+    {% for r in main_results %}
+    <li class="result">
+      {% if r.has_equivalents %}
+      <a href="/d/{{ key_to_slug[r.match_key] }}">{{ r.molecules }} {{ r.strength_set }} {{ r.form }}</a>
+      {% else %}
+      <span>{{ r.molecules }} {{ r.strength_set }} {{ r.form }}</span>
+      {% endif %}
+      <span class="tier">{{ r.tier }}</span>
+      {% if r.has_equivalents %}
+      <span class="badge has-equiv">equivalent available ({{ r.n_equivalents }})</span>
+      {% else %}
+      <span class="badge no-equiv">no equivalent yet</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if fuzzy_results %}
+  <h2 class="fuzzy-heading">Similar names — check spelling</h2>
+  <p class="fuzzy-note">These are approximate matches only. Verify the spelling before relying on them.</p>
+  <ul class="results fuzzy">
+    {% for r in fuzzy_results %}
+    <li class="result">
+      {% if r.has_equivalents %}
+      <a href="/d/{{ key_to_slug[r.match_key] }}">{{ r.molecules }} {{ r.strength_set }} {{ r.form }}</a>
+      {% else %}
+      <span>{{ r.molecules }} {{ r.strength_set }} {{ r.form }}</span>
+      {% endif %}
+      <span class="tier">fuzzy</span>
+      {% if r.has_equivalents %}
+      <span class="badge has-equiv">equivalent available ({{ r.n_equivalents }})</span>
+      {% else %}
+      <span class="badge no-equiv">no equivalent yet</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if not main_results and not fuzzy_results %}
+  <p class="notice">No matches for “{{ query }}”. Check the spelling, or try the molecule name as printed on the strip (e.g. “paracetamol”, not a brand name).</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

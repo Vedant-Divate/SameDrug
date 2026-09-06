@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}About — SameDrug{% endblock %}
+{% block content %}
+<h1>About SameDrug</h1>
+
+<h2>Disclaimers</h2>
+<p><strong>Informational only — NOT medical advice.</strong> Always verify with a pharmacist or doctor before buying or switching medicines. A cheaper equivalent is not automatically suitable for you.</p>
+<p>Ceiling prices © NPPA; Jan Aushadhi prices © PMBJP. SameDrug is not affiliated with either body. NPPA ceilings are tax-exclusive while Jan Aushadhi MRPs are tax-inclusive, so small differences may reflect tax, not real savings.</p>
+
+<h2>Methodology</h2>
+<p>NPPA ceiling rows and Jan Aushadhi products are joined on a canonical key of molecule + strength + form (salt suffixes and form variants normalized). Each join records its match method (exact, alias, fuzzy, modifier-relaxed, form-family) and a confidence level. Relaxed matches always carry a visible warning. Zero-MRP Jan Aushadhi rows (“price not yet published”) are never used in comparisons.</p>
+<p>Shareable cards live at <code>/d/{slug}</code>, where the slug is derived from the canonical key. Of {{ n_slugs }} formulation slugs, {{ slug_collisions }} needed deterministic disambiguation.</p>
+
+<h2>Data sources &amp; freshness</h2>
+<ul>
+  <li>NPPA ceiling-price compendium (IPDMS export): {{ counts.nppa_ceiling_prices }} rows, as-on 25-Mar-2026 (SO 1575/1581-1584(E)) — a snapshot, not live.</li>
+  <li>Jan Aushadhi product list (PMBJP public API): {{ counts.jap_products }} products.</li>
+  <li>{{ counts.equivalents }} equivalence rows over {{ counts.canonical_formulations }} canonical formulations.</li>
+  {% if data_as_on %}<li>This build’s data as on {{ data_as_on }}.</li>{% endif %}
+</ul>
+{% endblock %}

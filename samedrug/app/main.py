@@ -13,7 +13,8 @@ keys contain "|" and ":"):
 Every success response carries ``generated_at`` (ISO-8601 UTC) and
 ``data_as_on`` (equivalents.computed_at). Errors are structured
 ``{"detail": {...}}`` bodies. The DB is opened read-only (mode=ro URI);
-templates/ and static/ stay empty until the Phase 5 UI.
+HTML pages (/, /search, /d/{slug}, /about) are served by samedrug.app.ui
+over the same query layer; /static serves the single CSS file.
 """
 
 from __future__ import annotations
@@ -23,8 +24,10 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from samedrug.app import queries
+from samedrug.app import ui as ui_module
 
 DEFAULT_DB_PATH = queries.DEFAULT_DB_PATH
 
@@ -53,6 +56,28 @@ def create_app(db_path: str | Path = DEFAULT_DB_PATH) -> FastAPI:
         )
 
     app.add_exception_handler(HTTPException, _structured_http_exception)  # type: ignore[arg-type]
+
+    # Phase 5 UI: slug map built once at startup from canonical keys; the
+    # DB may be absent in tooling contexts, so tolerate that with empty maps
+    # (JSON endpoints report their own errors per request).
+    try:
+        with queries.connect_ro(db_path) as _conn:
+            _keys = [
+                r[0]
+                for r in _conn.execute(
+                    "SELECT match_key FROM canonical_formulations"
+                ).fetchall()
+            ]
+        _slug_to_key, _key_to_slug, _collisions = ui_module.build_slug_map(_keys)
+    except Exception:
+        _slug_to_key, _key_to_slug, _collisions = {}, {}, 0
+    app.state.slug_to_key = _slug_to_key
+    app.state.key_to_slug = _key_to_slug
+    app.state.slug_collisions = _collisions
+    app.state.ui_db_path = db_path
+    app.state.templates = ui_module.make_templates()
+    app.mount("/static", StaticFiles(directory=ui_module.STATIC_DIR), name="static")
+    app.include_router(ui_module.router)
 
     @app.get("/api/search")
     def search(

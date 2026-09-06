@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Not found — SameDrug{% endblock %}
+{% block content %}
+<h1>No card for “{{ slug }}”</h1>
+<p class="notice">We don’t have an equivalence card at this address. It may be a bad link, or there may be no Jan Aushadhi equivalent yet. Try searching:</p>
+<form class="search-box" action="/search" method="get">
+  <label for="q">Search a molecule</label>
+  <input id="q" name="q" type="search" minlength="2" required placeholder="paracetamol" autocomplete="off">
+  <button type="submit">Search</button>
+</form>
+{% endblock %}
