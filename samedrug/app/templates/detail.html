@@ -17,7 +17,7 @@
     <button type="button" class="copy-link" data-copy-link hidden><svg class="icon icon-16" aria-hidden="true"><use href="#icon-copy"/></svg> Copy link</button>
   </div>
   <p class="share-hint">Copy link to share this card.</p>
-  <p class="savings-hero {% if payload.savings_pct > 0 %}savings-positive{% else %}savings-negative{% endif %}" role="status"><span class="savings-icon" aria-hidden="true">{% if payload.savings_pct > 0 %}▼{% else %}▲{% endif %}</span> <span class="savings-value">{{ hero }}</span></p>
+  <p class="savings-hero {% if payload.savings_pct > 0 %}savings-positive{% else %}savings-negative{% endif %}" role="status"><span class="savings-icon" aria-hidden="true">{% if payload.savings_pct > 0 %}▼{% else %}▲{% endif %}</span> <span class="savings-value" data-countup="{{ savings_raw }}">{{ hero }}</span></p>
 
   <div class="price-grid">
     <section class="side nppa" aria-label="NPPA ceiling price">

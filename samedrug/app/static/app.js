@@ -27,10 +27,10 @@
   /* 2. Copy-link buttons (hidden without JS). */
   document.querySelectorAll("[data-copy-link]").forEach(function (btn) {
     btn.hidden = false;
-    var label = btn.textContent;
+    var label = btn.innerHTML; // keeps the inline icon across label swaps
     function done(ok) {
       btn.textContent = ok ? "Copied" : "Copy failed";
-      setTimeout(function () { btn.textContent = label; }, 1500);
+      setTimeout(function () { btn.innerHTML = label; }, 1500);
     }
     btn.addEventListener("click", function () {
       var url = window.location.href;
@@ -106,7 +106,7 @@
       if (!box.contains(ev.target) && ev.target !== input) close();
     });
   });
-  /* 5. Print button: created only with JS (absent without), hidden in print. */
+  /* 4. Print button: created only with JS (absent without), hidden in print. */
   document.querySelectorAll(".card .title-row").forEach(function (row) {
     var btn = document.createElement("button");
     btn.type = "button";
@@ -116,7 +116,7 @@
     btn.addEventListener("click", function () { window.print(); });
     row.appendChild(btn);
   });
-  /* 6. Smooth-scroll guard: in-page anchors only, off under reduced motion. */
+  /* 5. Smooth-scroll guard: in-page anchors only, off under reduced motion. */
   if (!reduceMotion) {
     document.querySelectorAll('a[href^="#"]').forEach(function (a) {
       a.addEventListener("click", function (ev) {
@@ -125,4 +125,28 @@
       });
     });
   }
+  /* 6. Savings count-up: 600ms ease-out decoration only. The final
+   * value is already server-rendered (no-JS and reduced-motion users see
+   * it immediately); digits inherit tabular-nums from the body. */
+  document.querySelectorAll("[data-countup]").forEach(function (el) {
+    var target = parseFloat(el.getAttribute("data-countup"));
+    var final = el.textContent;
+    if (!isFinite(target) || reduceMotion) return;
+    var suffix = target >= 0
+      ? " less at Jan Aushadhi"
+      : " MORE at Jan Aushadhi \u2014 above the ceiling"
+    var start = null, dur = 600;
+    function frame(now) {
+      if (start === null) start = now;
+      var t = Math.min((now - start) / dur, 1);
+      var v = target * (1 - Math.pow(1 - t, 3));
+      if (t < 1) {
+        el.textContent = "~" + Math.abs(v).toFixed(1) + "%" + suffix;
+        requestAnimationFrame(frame);
+      } else {
+        el.textContent = final; // exact server-rendered value
+      }
+    }
+    requestAnimationFrame(frame);
+  });
 })();
