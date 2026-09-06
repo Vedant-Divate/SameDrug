@@ -13,21 +13,22 @@
   data-savings="{{ savings_raw }}"
   data-mrp="{{ mrp_raw }}">
   <h1>{{ title }}</h1>
-  <p class="savings-hero">{{ hero }}</p>
+  <p class="savings-hero {% if payload.savings_pct > 0 %}savings-positive{% else %}savings-negative{% endif %}" role="status"><span class="savings-value">{{ hero }}</span></p>
 
   <div class="price-grid">
-    <section class="side nppa">
+    <section class="side nppa" aria-label="NPPA ceiling price">
       <h2>NPPA ceiling</h2>
-      <p class="price">{{ payload.nppa_side.ceiling_per_unit_inr|inr }} <span class="per">per unit</span></p>
+      <p class="price price-reference">{{ payload.nppa_side.ceiling_per_unit_inr|inr }} <span class="per">per unit</span></p>
       <dl>
         <dt>Unit basis</dt><dd>{{ payload.nppa_side.unit_basis }} ({{ payload.nppa_side.qualifier_raw }})</dd>
         <dt>NLEM version</dt><dd>{{ payload.nppa_side.nlem_version }}</dd>
         <dt>Price order</dt><dd>SO {{ payload.nppa_side.so_number }}, dated {{ payload.nppa_side.so_date }}</dd>
       </dl>
     </section>
-    <section class="side jap">
+    <div class="price-divider" aria-hidden="true"></div>
+    <section class="side jap" aria-label="Jan Aushadhi price">
       <h2>Jan Aushadhi</h2>
-      <p class="price">{{ payload.jap_side.per_unit_inr|inr }} <span class="per">per unit</span></p>
+      <p class="price price-primary">{{ payload.jap_side.per_unit_inr|inr }} <span class="per">per unit</span></p>
       <dl>
         <dt>Product</dt><dd>{{ payload.jap_side.generic_name }}</dd>
         <dt>Pack</dt><dd>{{ payload.jap_side.pack_raw }} (parsed: {{ payload.jap_side.pack_parsed }})</dd>
@@ -36,10 +37,7 @@
     </section>
   </div>
 
-  <p class="match-line">
-    <span class="badge method">{{ payload.match_method }} match</span>
-    <span class="badge conf-{{ payload.confidence }}">{{ payload.confidence }} confidence</span>
-  </p>
+  <p class="match-line">Matched by {{ payload.match_method }} match &middot; {{ payload.confidence }} confidence</p>
 
   {% if caveats_plain %}
   <section class="caveats">
@@ -53,12 +51,7 @@
   {% endif %}
 
   <footer class="provenance">
-    <h2>Provenance — every price traceable to source</h2>
-    <ul>
-      <li>NPPA: {{ payload.nppa_side.source_row }}, SO {{ payload.nppa_side.so_number }} ({{ payload.nppa_side.source_file }})</li>
-      <li>Jan Aushadhi: product_id {{ payload.jap_side.product_id }}, drug_code {{ payload.jap_side.drug_code }}</li>
-      {% if data_as_on %}<li>Data as on {{ data_as_on }}</li>{% endif %}
-    </ul>
+    <p><small>NPPA {{ payload.nppa_side.source_row }} &middot; SO {{ payload.nppa_side.so_number }} ({{ payload.nppa_side.source_file }}) &middot; Jan Aushadhi product_id {{ payload.jap_side.product_id }} &middot; drug_code {{ payload.jap_side.drug_code }}{% if data_as_on %} &middot; Data as on {{ data_as_on }}{% endif %}</small></p>
   </footer>
 </article>
 {% endblock %}
