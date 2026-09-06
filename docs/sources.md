@@ -145,3 +145,19 @@ JAP source (pipeline built in Phase 1; see data/processed/drugs.db):
   NBSP-to-space conversion before matching, or joins will silently miss.
 - Live-fetch verification: two full pulls through the built fetcher matched
   the seed byte-for-byte across all 2,439 rows.
+
+## Addendum — post-Phase-2 measurements (2026-09-06)
+
+NPPA ingestion complete (nppa_ceiling_prices table, see data/processed/drugs.db):
+- 937 price cells across both CSVs; 69 distinct qualifiers, 100% classified
+  by the parser grammar; zero unparseable rejects. Full inventory preserved
+  in the Phase 2 report and parser tests.
+- 936 kept rows; exactly 1 duplicate rejected (Intermediate-acting Insulin
+  40 IU/ml, kept once).
+- Spec corrections (found by measurement): data rows carry ONE leading empty
+  column, not two; the 100ml pair is Glass=Rs 22.99 / Non-Glass=Rs 20.80.
+- The special-feature file is a variant-price subset: all 10 of its
+  formulations already appear in the all-file.
+- Distinct formulation names: 437; (formulation, strength) keys: 866.
+- Order-sample PDFs remain in data/raw (gitignored) and move to
+  tests/fixtures/ when the Para-5 order-parser phase begins.
