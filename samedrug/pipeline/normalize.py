@@ -746,6 +746,12 @@ ALIASES: dict[str, str] = {
     "nimesulid": "nimesulide",
     "medroxyprogesteroneacetate": "medroxyprogesterone acetate",
     "dextrose": "glucose",
+    "lignocaine": "lidocaine",
+    "aciclovir": "acyclovir",
+    "nicotine polacrilex": "nicotine",
+    # Specific salt alias (evidence-driven, NOT a blanket sulphate rule:
+    # Magnesium/Ferrous/Zinc sulphate supplements must never collapse).
+    "gentamicin sulphate": "gentamicin",
 }
 
 # Salt suffixes stripped ONLY as whole trailing words (so "calcium phosphate"
