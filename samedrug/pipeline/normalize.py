@@ -501,6 +501,12 @@ _FORM_BASE: dict[str, str] = {
 }
 
 _FORM_FAMILY: dict[str, str] = {
+    # Injectable family (extension beyond the brief's three families):
+    # NPPA schedules the same IV fluid as Injection and as INFUSION, and
+    # JAP labels Dextrose fluids Infusion — exact base first, family
+    # fallback flagged form_family/low-confidence, never silent.
+    "injection": "injectable",
+    "infusion": "injectable",
     "syrup": "liquid",
     "suspension": "liquid",
     "dry_syrup": "liquid",
@@ -739,6 +745,7 @@ ALIASES: dict[str, str] = {
     "cetrizine": "cetirizine",
     "nimesulid": "nimesulide",
     "medroxyprogesteroneacetate": "medroxyprogesterone acetate",
+    "dextrose": "glucose",
 }
 
 # Salt suffixes stripped ONLY as whole trailing words (so "calcium phosphate"
