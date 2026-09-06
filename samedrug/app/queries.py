@@ -360,6 +360,7 @@ def get_jap_product(conn: sqlite3.Connection, product_id: int) -> dict | None:
     if jap is None:
         return None
     match_key: str | None = None
+    fallback_key: str | None = None
     for r in conn.execute(
         "SELECT match_key, jap_product_ids FROM canonical_formulations"
     ).fetchall():
@@ -368,8 +369,18 @@ def get_jap_product(conn: sqlite3.Connection, product_id: int) -> dict | None:
         except (ValueError, TypeError):
             continue
         if product_id in ids:
-            match_key = r["match_key"]
-            break
+            # Prefer the key backed by equivalents rows (a product can sit
+            # under both its natural unmatched key and a matched one).
+            has_equiv = conn.execute(
+                "SELECT 1 FROM equivalents WHERE match_key = ? LIMIT 1",
+                (r["match_key"],),
+            ).fetchone()
+            if has_equiv:
+                match_key = r["match_key"]
+                break
+            fallback_key = fallback_key or r["match_key"]
+    if match_key is None:
+        match_key = fallback_key
     equiv_rows = conn.execute(
         "SELECT match_key, nppa_ceiling_per_unit, jap_per_unit, savings_pct,"
         " match_method, confidence FROM equivalents"
