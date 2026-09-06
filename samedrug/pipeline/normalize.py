@@ -820,7 +820,7 @@ def canonical_molecules(names: list[str], *, use_alias: bool = True) -> list[str
 # ---------------------------------------------------------------------------
 
 _NPPA_SYNONYM_PAREN_RE = re.compile(r"\s*\([^()]*\)")
-_NPPA_INNER_PLUS_RE = re.compile(r"\(([^()]+\+[^()]+)\)[\]\)]?")
+_NPPA_INNER_PLUS_RE = re.compile(r"\(([^()]+\+[^()]+)[\)\]]")
 _NPPA_TRAILING_STRENGTH_RE = re.compile(
     rf"\s*{_NUM}\s*(%|(?:mcg|μg|ug|mg|g|gm|iu|ku)\b)\s*$", re.IGNORECASE
 )
@@ -840,12 +840,12 @@ def split_nppa_molecules(
     """
     t = clean_text(formulation_raw).replace("\n", " ")
     t = _WS_RE.sub(" ", t).strip()
-    inner = _NPPA_INNER_PLUS_RE.search(t)
+    t = _LABEL_RE.sub(" ", t)  # (A)/(B)/(C) pack labels go first so inner
+    inner = _NPPA_INNER_PLUS_RE.search(t)  # groups stay matchable
     if inner:
         parts = [p.strip() for p in inner.group(1).split("+")]
     else:
         t = _NPPA_SYNONYM_PAREN_RE.sub(" ", t)
-        t = _LABEL_RE.sub(" ", t)
         parts = [p.strip() for p in t.split("+")]
     parts = [re.sub(r"\s+plain\s*$", "", p, flags=re.IGNORECASE) for p in parts]
     parts = [_NPPA_TRAILING_STRENGTH_RE.sub("", p).strip() for p in parts]
@@ -911,11 +911,17 @@ _FORM_LEFTOVER_RE = re.compile(
     r"for\s+i\.?\s*v\.?(\s+use)?)\b",
     re.IGNORECASE,
 )
+# Dosage words stranded mid-segment ("Mifepristone Tablets 200mg" in a
+# combipack whose form attached to the last segment) are never molecules.
+_MID_FORM_RE = re.compile(
+    r"\b(tablets?|capsules?|tabs?|caps?|tabelts|tabets|capulses)\b",
+    re.IGNORECASE,
+)
 # Route/site adjectives stranded after form removal ("Bimatoprost
 # Ophthalmic Solution" -> molecule "Bimatoprost", form "solution").
 _ROUTE_RE = re.compile(
     r"\b(ophthalmic|ocular|topical|nasal|oral|rectal|vaginal|otic|dental|"
-    r"antiseptic|auricular)\b",
+    r"antiseptic|auricular|intravenous|intravenouse)\b",
     re.IGNORECASE,
 )
 # Trailing pack-flavour/base phrases ("Syrup with Menthol base",
@@ -1245,6 +1251,7 @@ def extract_jap_composition(generic_name: str) -> JapComposition:
     for i, content in paren_strengths:
         if i is not None:
             by_seg.setdefault(i, []).append(content)
+    deferred_global: list[str] = []
     idx = 0
     while idx < len(seg_texts):
         bare = _PLACEHOLDER_RE.sub(" ", seg_texts[idx])
@@ -1267,6 +1274,16 @@ def extract_jap_composition(generic_name: str) -> JapComposition:
             single_brand = (len(chunks) == 1
                             and outer_bare.casefold().startswith("janaushadhi")
                             and _STRENGTH_TOKEN_RE.search(chunks[0]))
+            if (len(chunks) >= 2 and not single_brand and all(
+                    _STRENGTH_TOKEN_RE.search(c) or _RATIO_RE.search(c)
+                    for c in chunks)):
+                # Multi-part group spanning several molecules ("2%w/v and
+                # 1:80000" for Lignocaine/Adrenaline): defer to the global
+                # positional assignment below instead of binding it whole.
+                deferred_global.append(content)
+                notes.append(f"deferred multi-part parens {content!r}")
+                idx += 1
+                continue
             if (len(chunks) >= 2
                     and all(_STRENGTH_TOKEN_RE.search(c) for c in chunks)) \
                     or single_brand:
@@ -1294,16 +1311,16 @@ def extract_jap_composition(generic_name: str) -> JapComposition:
         idx += 1
     # Global strength groups assign positionally to segments still lacking
     # strengths ("Lignocaine and Adrenaline ... (2%w/v and 1:80000)").
-    pending = [c for i, c in paren_strengths if i is None]
-    if pending:
+    pending = [c for i, c in paren_strengths if i is None] + deferred_global
+    for content in pending:
         needy = [i for i, s in enumerate(seg_strength) if s is None]
-        chunks = _PAREN_CHUNK_RE.split(pending[0])
-        chunks = [c.strip() for c in chunks if c.strip()]
-        if len(pending) == 1 and len(chunks) == len(needy) and needy:
+        chunks = [c.strip() for c in _PAREN_CHUNK_RE.split(content)
+                  if c.strip()]
+        if len(chunks) == len(needy) and needy:
             for i, chunk in zip(needy, chunks, strict=True):
                 seg_strength[i] = chunk
         else:
-            notes.append(f"unassigned strength parens {pending!r}")
+            notes.append(f"unassigned strength parens {content!r}")
 
     molecules: list[str] = []
     strengths: list[str | None] = []
@@ -1335,6 +1352,7 @@ def extract_jap_composition(generic_name: str) -> JapComposition:
                 seg = seg[: mfi.start()]
                 notes.append("form from 'for injection' residue")
         seg = _FORM_LEFTOVER_RE.sub(" ", seg)
+        seg = _MID_FORM_RE.sub(" ", seg)
         seg = _PER_RESIDUE_RE.sub("", seg)
         seg = _WITH_WFI_RE.sub("", seg)
         seg = _LEADING_FORM_OF_RE.sub("", seg)
