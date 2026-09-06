@@ -489,6 +489,7 @@ _FORM_BASE: dict[str, str] = {
     "powders": "powder",
     "vial": "injection",
     "vials": "injection",
+    "polypack": "injection",
     "ampoule": "injection",
     "ampoules": "injection",
     "pen": "pen",
@@ -905,7 +906,16 @@ _DESCRIPTOR_RE = re.compile(
 )
 _FORM_LEFTOVER_RE = re.compile(
     r"\b(amp|ampoule|ampoules|vial|vials|polypack|poly\s*pack|with\s+wfi|wfi|"
-    r"for\s+injection|for\s+intravenous(\s+use)?|for\s+i\.?\s*v\.?(\s+use)?)\b",
+    # "Water for Injection" keeps its "for Injection" (molecule, not pack).
+    r"(?<!water\s)(for\s+injection)|for\s+intravenous(\s+use)?|"
+    r"for\s+i\.?\s*v\.?(\s+use)?)\b",
+    re.IGNORECASE,
+)
+# Route/site adjectives stranded after form removal ("Bimatoprost
+# Ophthalmic Solution" -> molecule "Bimatoprost", form "solution").
+_ROUTE_RE = re.compile(
+    r"\b(ophthalmic|ocular|topical|nasal|oral|rectal|vaginal|otic|dental|"
+    r"antiseptic|auricular)\b",
     re.IGNORECASE,
 )
 # Trailing pack-flavour/base phrases ("Syrup with Menthol base",
@@ -1037,6 +1047,7 @@ _FORM_KEYWORDS: tuple[str, ...] = (
     "liquid",
     "syringe",
     "ampoule",
+    "polypack",
     "vial",
     "pen",
     "cartridge",
@@ -1113,7 +1124,11 @@ def _detect_form(main: str) -> tuple[str | None, str]:
             if before_ok and after_ok:
                 tail = main[end:]
                 if not tail.strip() or _is_strength_tail(tail):
-                    if best is None or i >= best[0]:
+                    # Longest match wins (so "eye drops" beats the nested
+                    # "drops"); ties break rightmost.
+                    if best is None or len(main[i:end]) > len(best[2]) or (
+                        len(main[i:end]) == len(best[2]) and i >= best[0]
+                    ):
                         best = (i, end, main[i:end])
             start = end
     if best is None:
@@ -1304,13 +1319,22 @@ def extract_jap_composition(generic_name: str) -> JapComposition:
                 seg_mods[i].append(token)
                 seg = pat.sub(" ", seg)
         seg = _DESCRIPTOR_RE.sub(" ", seg)
-        seg = _FORM_LEFTOVER_RE.sub(" ", seg)
+        seg = _ROUTE_RE.sub(" ", seg)
         seg = _WS_RE.sub(" ", seg).strip(" -,")
         if seg_strength[i] is None:
             found = _STRENGTH_FIND_RE.search(seg)
             if found:
                 seg_strength[i] = found.group(0)
                 seg = seg[: found.start()] + " " + seg[found.end():]
+        if form_raw is None:
+            # "... for Injection" is form information, not pack residue —
+            # rescue it before the leftover strip below eats it.
+            mfi = re.search(r"\s+for\s+injection\s*$", seg, re.IGNORECASE)
+            if mfi:
+                form_raw = "Injection"
+                seg = seg[: mfi.start()]
+                notes.append("form from 'for injection' residue")
+        seg = _FORM_LEFTOVER_RE.sub(" ", seg)
         seg = _PER_RESIDUE_RE.sub("", seg)
         seg = _WITH_WFI_RE.sub("", seg)
         seg = _LEADING_FORM_OF_RE.sub("", seg)
