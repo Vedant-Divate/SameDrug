@@ -161,3 +161,30 @@ NPPA ingestion complete (nppa_ceiling_prices table, see data/processed/drugs.db)
 - Distinct formulation names: 437; (formulation, strength) keys: 866.
 - Order-sample PDFs remain in data/raw (gitignored) and move to
   tests/fixtures/ when the Para-5 order-parser phase begins.
+
+## Addendum — post-Phase-3.5 fixes and verified findings (2026-09-06)
+
+- Cross-form capsule/tablet defect (22 rows): Step-0 audit proved 22/22
+  faithful NPPA labels, zero splitter mis-reads; capsule made distinct
+  base form; post-fix leak count 0 (verified by independent query).
+  Equivalents 289 -> 302: 22 re-matched to genuine same-form rows + 14
+  concentration matches - 1 false positive. Count ROSE because wrong
+  matches became right matches.
+- Variant selection now pack-condition + NLEM-vintage aware (new column
+  nppa_nlem_version; chosen: 2022=291, 2015=9, NULL=2). Dicyclomine
+  injection corrected from -837.5% (old-vintage Rs 0.2/ml row) to
+  +44.85% on the Rs 3.40 (<10ml, NLEM-2022) row.
+- GENUINE JAP-above-ceiling findings (kept, verified): pheniramine
+  22.75mg inj Rs 1.875/ml vs ceiling Rs 1.415/ml (-32.5%);
+  dexamethasone 4mg/ml -8.1% = tax artifact (ceilings tax-exclusive,
+  JAP MRP tax-inclusive; 5.21 x 1.08 = 5.63 exactly).
+- NPPA qualifier semantics: "(1 ML)" = concentration on small-volume
+  injections but total content on large-volume infusions (metronidazole);
+  resolved by measured match outcomes.
+- Tier-C agreement: imatinib 400mg ceiling Rs 325.64 matches the
+  anti-cancer category PDF value.
+- Post-fix state: 321/866 NPPA keys matched (37.1%); 302 equivalences.
+  Both dicyclomine rows independently verified as distinct formulation
+  keys: injection (NLEM 2022, pack-condition variant, +44.85%) and
+  tablet (NLEM 2015, +27.7% — JAP Rs 0.094/tab vs Rs 0.13 ceiling,
+  cross-checked against the original seed CSV row 148).
