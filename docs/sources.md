@@ -216,3 +216,19 @@ API layer verified live (read-only DB enforced by test):
 - Incident note: a git index.lock collision (IDE pollers) interrupted
   cleanup; resolved via diff-based verification — all test files
   confirmed byte-identical to HEAD, no work lost.
+
+## Addendum — post-Phase-5 measurements (2026-09-06)
+
+UI live (server-rendered Jinja2, zero JS, mobile-first; samedrug/app/ui.py):
+- Verified in browser: /, /search?q=paracetamol, the paracetamol 500mg
+  card (ceiling Rs 0.93 vs JAP Rs 0.66 displayed / 0.6559... full
+  precision in data attributes), phone-width layout, /about, 404.
+- Slug map over 2,709 keys: 2 real collisions (povidone iodine vs
+  povidone-iodine; two silk-suture rows) — deterministically
+  disambiguated (-2 suffix), count surfaced on /about.
+- Negative-savings cards render as "~X% MORE ... above the ceiling"
+  with warning styling; tax-basis caveat on dexamethasone only.
+- Deviation on record: Phase 5 shipped as 2 commits vs the 7-commit
+  target sequence (feat/test bundling); disclosed rather than split.
+- 290 tests (23 new UI incl. 4 real-DB rendering locks); frozen paths
+  untouched; Phase 4 JSON contract unchanged.
