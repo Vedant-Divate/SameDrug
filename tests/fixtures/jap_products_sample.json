@@ -1,0 +1,134 @@
+{
+  "responseBody": {
+    "newProductResponsesList": [
+      {
+        "productId": 1,
+        "genericName": "Aceclofenac 100mg and Paracetamol 325mg Tablets",
+        "groupName": "Analgesic/Antipyretic/Anti-Inflammatory",
+        "drugCode": 1,
+        "unitSize": "10's",
+        "mrp": 10.32,
+        "status": 1,
+        "serialNo": 1
+      },
+      {
+        "productId": 2060,
+        "genericName": "Diclofenac Gel IP 1.16%w/w (Diclofenac Diethylamine)",
+        "groupName": "Dermatology/Topical/External",
+        "drugCode": 7,
+        "unitSize": "15 g",
+        "mrp": 12.38,
+        "status": 1,
+        "serialNo": 6
+      },
+      {
+        "productId": 38,
+        "genericName": "Tinidazole Tablets IP 500 mg",
+        "groupName": "Antibiotics",
+        "drugCode": 108,
+        "unitSize": "10's",
+        "mrp": 15.0,
+        "status": 1,
+        "serialNo": 101
+      },
+      {
+        "productId": 1656,
+        "genericName": "Escitalopram Tablets IP 20 mg",
+        "groupName": "Central Nervous System (CNS)",
+        "drugCode": 322,
+        "unitSize": "10's",
+        "mrp": 18.75,
+        "status": 1,
+        "serialNo": 251
+      },
+      {
+        "productId": 2048,
+        "genericName": "Pantoprazole Sodium 40 mg (Enteric Coated) and Itopride Hydrochloride 150 mg (Sustained Release) Capsules",
+        "groupName": "Gastrointestinal (GIT)",
+        "drugCode": 685,
+        "unitSize": "10's",
+        "mrp": 46.88,
+        "status": 1,
+        "serialNo": 501
+      },
+      {
+        "productId": 121,
+        "genericName": "Calcium Phosphate 82mg, Vitamin D3 200IU and Vitamin B12 2.5mcg Suspension",
+        "groupName": "Supplement/Vitamin/Mineral",
+        "drugCode": 1252,
+        "unitSize": "200 ml",
+        "mrp": 33.75,
+        "status": 1,
+        "serialNo": 751
+      },
+      {
+        "productId": 403,
+        "genericName": "Levetiracetam Tablets IP 250 mg",
+        "groupName": "Central Nervous System (CNS)",
+        "drugCode": 1681,
+        "unitSize": "10's",
+        "mrp": 28.13,
+        "status": 1,
+        "serialNo": 1001
+      },
+      {
+        "productId": 675,
+        "genericName": "Cefprozil Tablet 250 mg",
+        "groupName": "Antibiotics",
+        "drugCode": 1987,
+        "unitSize": "10's",
+        "mrp": 140.63,
+        "status": 1,
+        "serialNo": 1251
+      },
+      {
+        "productId": 950,
+        "genericName": "Ondansetron 8mg Oral Disintegrating Strips",
+        "groupName": "Anti-Emetic",
+        "drugCode": 2269,
+        "unitSize": "12's in Mono Carton",
+        "mrp": 103.13,
+        "status": 1,
+        "serialNo": 1501
+      },
+      {
+        "productId": 1219,
+        "genericName": "Dapagliflozin 10mg, Sitagliptin 100mg and Metformin Hydrochloride (Extended Release) 500mg Tablets",
+        "groupName": "Anti-Diabetic",
+        "drugCode": 2523,
+        "unitSize": "10's",
+        "mrp": 67.5,
+        "status": 1,
+        "serialNo": 1751
+      },
+      {
+        "productId": 1493,
+        "genericName": "Janaushadhi Urja (Glucose Powder (Orange Flavour) 1kg)",
+        "groupName": "Nutraceuticals",
+        "drugCode": 2775,
+        "unitSize": "1kg Screw-Cap jar with scoop",
+        "mrp": 0.0,
+        "status": 1,
+        "serialNo": 2001
+      },
+      {
+        "productId": 2385,
+        "genericName": "Cotton Ear Buds",
+        "groupName": "Surgical & Medical Consumables",
+        "drugCode": 9068,
+        "unitSize": "100 Ear Buds",
+        "mrp": 0.0,
+        "status": 1,
+        "serialNo": 2439
+      }
+    ],
+    "pageIndex": 0,
+    "pageSize": 12,
+    "totalElement": 12,
+    "isLastPage": true,
+    "isFirstPage": true,
+    "totalPages": 1
+  },
+  "message": "sample of 12 real records from data/raw/jap_products.json (seed indexes [0, 5, 100, 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2438])",
+  "responseCode": 200
+}
