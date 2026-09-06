@@ -114,18 +114,70 @@
 /* 2. Base */
 * { box-sizing: border-box; }
 
+/* 2b. Inline SVG icon sprite (one hidden <svg> in base.html, <use> refs).
+ * All glyphs inherit currentColor as their fill; three sizes on a scale. */
+.icon-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: currentColor;
+  stroke: none;
+  vertical-align: -0.15em;
+}
+.icon-16 { width: 16px; height: 16px; }
+.icon-20 { width: 20px; height: 20px; }
+.icon-24 { width: 24px; height: 24px; }
+.micro-label .icon, .match-line .icon, .copy-link .icon,
+.price .icon, dd .icon { margin-right: var(--sp-1); }
+.search-lead { align-self: center; color: var(--muted); }
+
+/* 2c. Motion layer — all keyframes are disabled under reduced motion
+ * (see the media query at the end of this file). */
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(4px); }
+}
+@keyframes bar-grow {
+  from { width: 0; }
+}
+
 html { color-scheme: light dark; }
 
 body {
   margin: 0 auto;
   max-width: 44rem;
   padding: 0 var(--sp-4) var(--sp-8);
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(42rem 30rem at 85% -8rem, rgba(11, 110, 79, 0.07), transparent 70%),
+    radial-gradient(36rem 26rem at -10% 14rem, rgba(26, 115, 232, 0.05), transparent 70%);
   color: var(--ink);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: var(--text-16);
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
+}
+
+/* Dark-mode wash: same composition, accent-tinted for the dark surface. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) body {
+    background-image:
+      radial-gradient(42rem 30rem at 85% -8rem, rgba(76, 195, 138, 0.1), transparent 70%),
+      radial-gradient(36rem 26rem at -10% 14rem, rgba(138, 180, 248, 0.07), transparent 70%);
+  }
+}
+:root[data-theme="dark"] body {
+  background-image:
+    radial-gradient(42rem 30rem at 85% -8rem, rgba(76, 195, 138, 0.1), transparent 70%),
+    radial-gradient(36rem 26rem at -10% 14rem, rgba(138, 180, 248, 0.07), transparent 70%);
+}
+:root[data-theme="light"] body {
+  background-image:
+    radial-gradient(42rem 30rem at 85% -8rem, rgba(11, 110, 79, 0.07), transparent 70%),
+    radial-gradient(36rem 26rem at -10% 14rem, rgba(26, 115, 232, 0.05), transparent 70%);
 }
 
 main { padding: var(--sp-4) 0; }
@@ -264,6 +316,8 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   box-shadow: var(--shadow-1);
   padding: var(--sp-2) var(--sp-3);
   margin: var(--sp-2) 0;
+  animation: row-in 240ms ease-out both;
+  animation-delay: calc(var(--i, 0) * 30ms);
 }
 .result:hover { box-shadow: var(--shadow-2); }
 .result-has-equiv { border-left: var(--sp-1) solid var(--accent); }
@@ -299,6 +353,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-2);
   padding: var(--sp-4) var(--sp-5);
+  animation: card-in 240ms ease-out;
 }
 
 .savings-hero {
@@ -369,6 +424,8 @@ dd { margin: 0 0 var(--sp-2); }
 .title-row { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
 .title-row h1 { margin: var(--sp-4) 0 var(--sp-1); flex: 1 1 auto; }
 .copy-link {
+  display: inline-flex;
+  align-items: center;
   font-size: var(--text-14);
   color: var(--accent);
   background: transparent;
@@ -396,7 +453,7 @@ dd { margin: 0 0 var(--sp-2); }
   border-radius: var(--radius-pill);
   overflow: hidden;
 }
-.bar { height: 100%; border-radius: var(--radius-pill); }
+.bar { height: 100%; border-radius: var(--radius-pill); animation: bar-grow 500ms ease-out; }
 .bar-ceiling { background: var(--muted); }
 .bar-jap { background: var(--accent); }
 
@@ -416,4 +473,5 @@ dd { margin: 0 0 var(--sp-2); }
 
 @media (prefers-reduced-motion: reduce) {
   a, button, input { transition: none; }
+  .card, .results .result, .bar { animation: none; }
 }

@@ -11,6 +11,35 @@
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+<svg class="icon-sprite" aria-hidden="true" focusable="false">
+  <symbol id="icon-pill" viewBox="0 0 24 24">
+    <path d="M10.5 3.6a5 5 0 0 0-7 7l7 7a5 5 0 0 0 7-7l-7-7z"/>
+    <path opacity="0.45" d="M13.5 6.6a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7-7l7-7z"/>
+  </symbol>
+  <symbol id="icon-rupee" viewBox="0 0 24 24">
+    <text x="12" y="17.5" text-anchor="middle" font-size="15" font-weight="bold">₹</text>
+  </symbol>
+  <symbol id="icon-calendar" viewBox="0 0 24 24">
+    <path d="M5 6V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1h1a1 1 0 0 1 1 1v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a1 1 0 0 1 1-1h1zm2 0h10V5H7v1zM5 9v10h14V9H5zm3 2h2v2H8v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zM8 15h2v2H8v-2zm4 0h2v2h-2v-2z"/>
+  </symbol>
+  <symbol id="icon-shield-check" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M12 2.5 20 6v6c0 5-3.4 8.6-8 9.5C7.4 20.6 4 17 4 12V6l8-3.5zm0 2.2L6 7.1V12c0 3.9 2.6 6.8 6 7.6 3.4-.8 6-3.7 6-7.6V7.1l-6-2.4z"/>
+    <path d="M10.6 12.4 8.4 10.2l-1.4 1.4 3.6 3.6 6.4-6.4-1.4-1.4-5 5z"/>
+  </symbol>
+  <symbol id="icon-copy" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M8 3h11a1 1 0 0 1 1 1v11h-2V5H8V3zM5 8h11a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zm1 2v9h9v-9H6z"/>
+  </symbol>
+  <symbol id="icon-sun" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="4.5"/>
+    <path d="M12 1.5h0a1.3 1.3 0 0 1 1.3 1.3v2.4a1.3 1.3 0 0 1-2.6 0V2.8A1.3 1.3 0 0 1 12 1.5zm0 15.8h0a1.3 1.3 0 0 1 1.3 1.3v2.6a1.3 1.3 0 0 1-2.6 0v-2.6a1.3 1.3 0 0 1 1.3-1.3zM1.5 12h0a1.3 1.3 0 0 1 1.3-1.3h2.4a1.3 1.3 0 0 1 0 2.6H2.8A1.3 1.3 0 0 1 1.5 12zm15.8 0h0a1.3 1.3 0 0 1 1.3-1.3h2.6a1.3 1.3 0 0 1 0 2.6h-2.6a1.3 1.3 0 0 1-1.3-1.3zM4.6 4.6h0a1.3 1.3 0 0 1 1.8 0l1.7 1.7a1.3 1.3 0 0 1-1.8 1.8L4.6 6.4a1.3 1.3 0 0 1 0-1.8zm11.3 11.3h0a1.3 1.3 0 0 1 1.8 0l1.7 1.7a1.3 1.3 0 0 1-1.8 1.8l-1.7-1.7a1.3 1.3 0 0 1 0-1.8zm0-11.3h0a1.3 1.3 0 0 1 0 1.8l-1.7 1.7a1.3 1.3 0 0 1-1.8-1.8l1.7-1.7a1.3 1.3 0 0 1 1.8 0zM4.6 19.4h0a1.3 1.3 0 0 1 0-1.8l1.7-1.7a1.3 1.3 0 0 1 1.8 1.8l-1.7 1.7a1.3 1.3 0 0 1-1.8 0z"/>
+  </symbol>
+  <symbol id="icon-moon" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a.8.8 0 0 0-1-1A10 10 0 1 0 21.5 15.5a.8.8 0 0 0-1-1zM12 5.2A7 7 0 0 0 5.2 12 7 7 0 0 0 12 18.8 7 7 0 0 0 18.8 12 7 7 0 0 0 12 5.2z"/>
+  </symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M10.5 3a7.5 7.5 0 1 0 4.6 13.4l4 4 1.8-1.8-4-4A7.5 7.5 0 0 0 10.5 3zm0 2.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10z"/>
+  </symbol>
+</svg>
 <header class="navbar">
   <a class="brand" href="/" aria-label="SameDrug home">
     <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="currentColor" opacity="0.14"/><text x="16" y="23" font-size="18" text-anchor="middle" fill="currentColor" font-weight="bold">₹</text></svg>
@@ -21,8 +50,8 @@
     <a href="/about">About</a>
     <a href="https://github.com/Vedant-Divate/SameDrug" rel="noopener">GitHub<svg class="ext-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3H3v10h10v-3M9 3h4v4M13 3L7 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     <button type="button" class="theme-toggle" data-theme-toggle hidden aria-pressed="false" aria-label="Toggle dark mode">
-      <svg class="icon-sun" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M13 3l-1.4 1.4M4.4 11.6L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <svg class="icon-moon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 10.5A5.5 5.5 0 0 1 5.5 3 5.5 5.5 0 1 0 13 10.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      <svg class="icon icon-16 icon-sun" aria-hidden="true"><use href="#icon-sun"/></svg>
+      <svg class="icon icon-16 icon-moon" aria-hidden="true"><use href="#icon-moon"/></svg>
     </button>
   </nav>
 </header>

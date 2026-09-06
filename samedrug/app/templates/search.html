@@ -4,6 +4,7 @@
 <h1>Search</h1>
 <form class="search-box" action="/search" method="get">
   <label for="q">Search a molecule</label>
+  <svg class="icon icon-20 search-lead" aria-hidden="true"><use href="#icon-search"/></svg>
   <input id="q" name="q" type="search" minlength="2" required value="{{ query }}" placeholder="paracetamol" autocomplete="off" data-suggest="/api/search" role="combobox" aria-expanded="false" aria-controls="search-suggest-list" aria-autocomplete="list">
   <button type="submit">Search</button>
 </form>
@@ -15,7 +16,7 @@
   <h2>Results ({{ main_results|length }})</h2>
   <ul class="results">
     {% for r in main_results %}
-    <li class="result {% if r.has_equivalents %}result-has-equiv{% else %}result-no-equiv{% endif %}">
+    <li class="result {% if r.has_equivalents %}result-has-equiv{% else %}result-no-equiv{% endif %}" style="--i: {{ loop.index0 }}">
       {% if r.has_equivalents %}
       <a href="/d/{{ key_to_slug[r.match_key] }}">{{ r.molecules }} {{ r.strength_set }} {{ r.form }}</a>
       {% else %}
@@ -37,7 +38,7 @@
   <p class="fuzzy-note">These are approximate matches only. Verify the spelling before relying on them.</p>
   <ul class="results fuzzy">
     {% for r in fuzzy_results %}
-    <li class="result {% if r.has_equivalents %}result-has-equiv{% else %}result-no-equiv{% endif %}">
+    <li class="result {% if r.has_equivalents %}result-has-equiv{% else %}result-no-equiv{% endif %}" style="--i: {{ loop.index0 }}">
       {% if r.has_equivalents %}
       <a href="/d/{{ key_to_slug[r.match_key] }}">{{ r.molecules }} {{ r.strength_set }} {{ r.form }}</a>
       {% else %}
