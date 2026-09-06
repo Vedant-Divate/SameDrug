@@ -4,9 +4,12 @@ Full rebuild semantics: drops and recreates jap_products + meta on every
 full run. Only active (status=1) JAP rows are stored; rejects go to a CSV
 audit trail. Phase 2 adds the nppa_ceiling_prices table (drop-if-exists)
 built from both NPPA ceiling CSVs via samedrug.pipeline.parsers.nppa.
+Phase 3 runs the staged NPPA<->JAP match as the final stage of a full
+build (writes canonical_formulations + equivalents + match meta keys;
+drop-if-exists applies to THOSE tables only) unless --no-match is given.
 CLI: python -m samedrug.pipeline.build_db [--source ...] [--db ...]
 [--rejects ...] [--fetch] [--nppa-all ...] [--nppa-special ...]
-[--nppa-rejects ...] [--jap-only | --nppa-only].
+[--nppa-rejects ...] [--jap-only | --nppa-only] [--no-match].
 """
 
 import argparse
@@ -110,12 +113,16 @@ def build_db(
     nppa_rejects_path: str | Path | None = None,
     include_jap: bool = True,
     include_nppa: bool = True,
+    run_match: bool = True,
 ) -> BuildStats:
     """Build data/processed-style SQLite DB from the seed file or live fetch.
 
     Default: full rebuild of JAP + NPPA tables with fresh meta. Partial
     builds (--jap-only / --nppa-only) only touch their own table and upsert
     their own meta keys, leaving the other side undisturbed.
+    A full build finishes with the Phase 3 staged match
+    (canonical_formulations + equivalents + match meta) unless
+    run_match=False (--no-match).
     """
     if rejects_path is None:
         rejects_path = Path("data/interim/jap_rejects.csv")
@@ -296,6 +303,14 @@ def build_db(
                 nppa_meta,
             )
 
+    if run_match and include_jap and include_nppa:
+        from samedrug.pipeline.match import run_matching
+
+        result = run_matching(db_path)
+        print(f"equivalents={result['meta']['equivalents_count']}")
+    elif run_match:
+        print("match stage skipped (partial build needs both tables)")
+
     return stats
 
 
@@ -323,6 +338,11 @@ def main(argv: list[str] | None = None) -> BuildStats:
         action="store_true",
         help="rebuild only the NPPA table, leaving JAP data undisturbed",
     )
+    parser.add_argument(
+        "--no-match",
+        action="store_true",
+        help="skip the Phase 3 match stage (raw tables only)",
+    )
     args = parser.parse_args(argv)
     stats = build_db(
         args.source,
@@ -334,6 +354,7 @@ def main(argv: list[str] | None = None) -> BuildStats:
         nppa_rejects_path=args.nppa_rejects,
         include_jap=not args.nppa_only,
         include_nppa=not args.jap_only,
+        run_match=not args.no_match,
     )
     print(f"total={stats.total} kept={stats.kept} rejected={stats.rejected}")
     print(f"reasons={stats.reject_reasons}")

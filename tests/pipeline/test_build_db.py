@@ -83,6 +83,7 @@ def _full_fixture_build(tmp_path):
         nppa_all_path=NPPA_ALL_FIXTURE,
         nppa_special_path=NPPA_SPECIAL_FIXTURE,
         nppa_rejects_path=tmp_path / "nppa_rejects.csv",
+        run_match=False,
     )
     return db_path, stats
 
@@ -184,7 +185,8 @@ def test_cli_scope_flags(tmp_path):
             "--rejects", str(tmp_path / "j.csv"),
             "--nppa-all", str(NPPA_ALL_FIXTURE),
             "--nppa-special", str(NPPA_SPECIAL_FIXTURE),
-            "--nppa-rejects", str(tmp_path / "n.csv")]
+            "--nppa-rejects", str(tmp_path / "n.csv"),
+            "--no-match"]
     main([*base, "--jap-only"])
     with sqlite3.connect(db_path) as conn:
         assert conn.execute("SELECT COUNT(*) FROM jap_products").fetchone()[0] == 12
