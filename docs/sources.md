@@ -188,3 +188,31 @@ NPPA ingestion complete (nppa_ceiling_prices table, see data/processed/drugs.db)
   keys: injection (NLEM 2022, pack-condition variant, +44.85%) and
   tablet (NLEM 2015, +27.7% — JAP Rs 0.094/tab vs Rs 0.13 ceiling,
   cross-checked against the original seed CSV row 148).
+
+## Addendum — post-Phase-4 measurements (2026-09-06)
+
+API layer verified live (read-only DB enforced by test):
+- /api/equivalents/paracetamol:500mg|tablet: ceiling Rs 0.93 (2022,
+  SO 1575(E), sl_no=706) vs JAP Rs 0.656 (product 982) = 29.46% savings,
+  exact/high, full provenance. Math independently recomputed.
+- Dicyclomine 10mg/ml injection via API: Rs 3.40, NLEM 2022,
+  pack_condition_match, +44.85% — Phase 3.5 fix locked at HTTP layer
+  (integration test).
+- /api/jap/1493 (mrp=0): returns excluded_reason price_not_published —
+  the zero-MRP gate is user-visible honesty, not silent omission.
+- Key denominators clarified: 866 = raw (formulation, strength) keys
+  (Phase 2 measurement); 867 = canonical triples after normalization;
+  /api/stats uses 867, the match ladder reports both.
+- Fuzzy review band (0.85-0.92) held two candidates: OMEPRAZOLE vs
+  Esomeprazole (90.9 — different INNs, never join; the band prevented
+  a clinically wrong auto-match) and CARBOXY METHYL CELLULOSE vs
+  Carboxymethlycellulose (91.3 — genuine JAP typo, future alias).
+- Pipeline determinism: full match re-run produced identical stats
+  (302 equivalents, same ladder and savings) — rebuilds are
+  reproducible.
+- Alias backlog (named): vitamin d3 (cholecalciferol) for the 60000iu
+  sachet rows; brand-name table for search (Dolo etc.); Paracetamol
+  150mg injection pack-variant matching (6 unmatched rows, NLEM 2015).
+- Incident note: a git index.lock collision (IDE pollers) interrupted
+  cleanup; resolved via diff-based verification — all test files
+  confirmed byte-identical to HEAD, no work lost.
