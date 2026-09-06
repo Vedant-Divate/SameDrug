@@ -91,6 +91,46 @@ def create_app(db_path: str | Path = DEFAULT_DB_PATH) -> FastAPI:
                 )
             return _envelope(payload, queries.get_data_as_on(conn))
 
+    @app.get("/api/stats")
+    def stats() -> dict[str, Any]:
+        """Match ladder, method distribution, and savings (cached in-process).
+
+        The method_distribution sum always equals equivalents_count; the
+        process-start cache means a DB rebuild requires an app restart.
+        """
+        stats_payload = queries.get_stats(db_path)
+        return _envelope(dict(stats_payload), stats_payload["data_as_on"])
+
+    @app.get("/api/jap/{product_id}")
+    def jap_lookup(product_id: int) -> dict[str, Any]:
+        """Single JAP product + match/equivalence summary (404 if unknown).
+
+        Zero-MRP rows ("price not yet published") are returned with
+        ``excluded_reason``, never silently omitted.
+        """
+        with queries.connect_ro(db_path) as conn:
+            payload = queries.get_jap_product(conn, product_id)
+            if payload is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail={"error": "unknown_product_id", "product_id": product_id},
+                )
+            return _envelope(payload, queries.get_data_as_on(conn))
+
+    @app.get("/health")
+    def health() -> dict[str, Any]:
+        """Deploy healthcheck: status + per-table counts (one query each)."""
+        with queries.connect_ro(db_path) as conn:
+            counts = queries.table_counts(conn)
+            return _envelope(
+                {
+                    "status": "ok",
+                    "db": counts,
+                    "db_stats_cached": queries.stats_cache_populated(db_path),
+                },
+                queries.get_data_as_on(conn),
+            )
+
     return app
 
 
