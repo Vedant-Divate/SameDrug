@@ -133,3 +133,15 @@ Observed cross-source / intra-source name variants requiring aliasing:
 - TenofovirDisproxilFumarate (mangled) = Tenofovir Disoproxil Fumarate
 - Medroxyprogesteroneacetate (missing space) = Medroxyprogesterone Acetate
 
+
+## Addendum — post-Phase-1 measurements (2026-09-06)
+
+JAP source (pipeline built in Phase 1; see data/processed/drugs.db):
+- Measured: 387/2,439 rows have mrp=0.00 — interpreted as "price not yet
+  published" (corroborated by the PMBI site footnote on zero-MRP products),
+  not free; excluded from price comparisons at the equivalents layer.
+- Measured: 19 genericNames contain U+00A0 non-breaking spaces, and some
+  contain Greek letters (alpha/beta). normalize.py must apply NFKC and
+  NBSP-to-space conversion before matching, or joins will silently miss.
+- Live-fetch verification: two full pulls through the built fetcher matched
+  the seed byte-for-byte across all 2,439 rows.
