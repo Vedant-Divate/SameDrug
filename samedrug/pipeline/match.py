@@ -362,17 +362,18 @@ def run_match(
 
     def _register(nrec: NppaCanon, jrec: JapCanon, method: str,
                   stage: str, via_conv: bool = False) -> None:
-        key = (nrec.key_alias if method in ("alias", "fuzzy", "form_family")
-               else nrec.key_plain)
+        # The match dict is ALWAYS keyed by alias key: for exact matches the
+        # alias keys agree whenever the plain keys do (same function), and
+        # the canonical table is alias-keyed. Keying exact matches by plain
+        # key orphaned them (JAP 1709 vanished from canon pre-fix).
+        key = nrec.key_alias
         stats["stage_keys"][stage].add(key)
         m = matches.get(key)
         if m is None:
             mods = tuple(sorted(set(nrec.modifiers) | set(jrec.modifiers)))
-            plain = method == "exact"
             m = matches[key] = Match(
                 match_key=key,
-                molecule_set="+".join(sorted(
-                    nrec.molecules_plain if plain else nrec.molecules_alias)),
+                molecule_set="+".join(sorted(nrec.molecules_alias)),
                 strength_set="+".join(sorted(nrec.strengths)),
                 form=nrec.form,
                 family=nrec.family,
