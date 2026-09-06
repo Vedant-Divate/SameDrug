@@ -12,12 +12,16 @@
   data-jap-per-unit="{{ jap_raw }}"
   data-savings="{{ savings_raw }}"
   data-mrp="{{ mrp_raw }}">
-  <h1>{{ title }}</h1>
-  <p class="savings-hero {% if payload.savings_pct > 0 %}savings-positive{% else %}savings-negative{% endif %}" role="status"><span class="savings-value">{{ hero }}</span></p>
+  <div class="title-row">
+    <h1>{{ title }}</h1>
+    <button type="button" class="copy-link" data-copy-link hidden>Copy link</button>
+  </div>
+  <p class="share-hint">Copy link to share this card.</p>
+  <p class="savings-hero {% if payload.savings_pct > 0 %}savings-positive{% else %}savings-negative{% endif %}" role="status"><span class="savings-icon" aria-hidden="true">{% if payload.savings_pct > 0 %}▼{% else %}▲{% endif %}</span> <span class="savings-value">{{ hero }}</span></p>
 
   <div class="price-grid">
     <section class="side nppa" aria-label="NPPA ceiling price">
-      <h2>NPPA ceiling</h2>
+      <h2 class="micro-label">NPPA ceiling</h2>
       <p class="price price-reference">{{ payload.nppa_side.ceiling_per_unit_inr|inr }} <span class="per">per unit</span></p>
       <dl>
         <dt>Unit basis</dt><dd>{{ payload.nppa_side.unit_basis }} ({{ payload.nppa_side.qualifier_raw }})</dd>
@@ -27,7 +31,7 @@
     </section>
     <div class="price-divider" aria-hidden="true"></div>
     <section class="side jap" aria-label="Jan Aushadhi price">
-      <h2>Jan Aushadhi</h2>
+      <h2 class="micro-label">Jan Aushadhi</h2>
       <p class="price price-primary">{{ payload.jap_side.per_unit_inr|inr }} <span class="per">per unit</span></p>
       <dl>
         <dt>Product</dt><dd>{{ payload.jap_side.generic_name }}</dd>
@@ -36,6 +40,18 @@
       </dl>
     </section>
   </div>
+
+  {% set maxp = [payload.nppa_side.ceiling_per_unit_inr, payload.jap_side.per_unit_inr]|max %}
+  <section class="bars" role="img" aria-label="Price comparison: NPPA ceiling {{ payload.nppa_side.ceiling_per_unit_inr|inr }} per unit versus Jan Aushadhi {{ payload.jap_side.per_unit_inr|inr }} per unit">
+    <div class="bar-row">
+      <span class="bar-label">NPPA ceiling {{ payload.nppa_side.ceiling_per_unit_inr|inr }}</span>
+      <div class="bar-track"><div class="bar bar-ceiling" style="width: {{ (payload.nppa_side.ceiling_per_unit_inr / maxp * 100)|round(1) }}%"></div></div>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">Jan Aushadhi {{ payload.jap_side.per_unit_inr|inr }}</span>
+      <div class="bar-track"><div class="bar bar-jap" style="width: {{ (payload.jap_side.per_unit_inr / maxp * 100)|round(1) }}%"></div></div>
+    </div>
+  </section>
 
   <p class="match-line">Matched by {{ payload.match_method }} match &middot; {{ payload.confidence }} confidence</p>
 

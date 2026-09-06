@@ -4,7 +4,7 @@
 <h1>Search</h1>
 <form class="search-box" action="/search" method="get">
   <label for="q">Search a molecule</label>
-  <input id="q" name="q" type="search" minlength="2" required value="{{ query }}" placeholder="paracetamol" autocomplete="off">
+  <input id="q" name="q" type="search" minlength="2" required value="{{ query }}" placeholder="paracetamol" autocomplete="off" data-suggest="/api/search" role="combobox" aria-expanded="false" aria-controls="search-suggest-list" aria-autocomplete="list">
   <button type="submit">Search</button>
 </form>
 

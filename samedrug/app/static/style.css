@@ -342,6 +342,41 @@ dd { margin: 0 0 var(--sp-2); }
 .stat-date { font-size: var(--text-14); font-weight: 600; overflow-wrap: anywhere; }
 .stat-label { font-size: var(--text-12); color: var(--muted); }
 
+/* 7. Card extras: title row, micro-labels, comparison bars */
+.title-row { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.title-row h1 { margin: var(--sp-4) 0 var(--sp-1); flex: 1 1 auto; }
+.copy-link {
+  font-size: var(--text-14);
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-pill);
+  padding: var(--sp-1) var(--sp-3);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.copy-link:hover { background: var(--success-bg); }
+.copy-link[hidden] { display: none; }
+.share-hint { margin: 0 0 var(--sp-1); font-size: var(--text-12); color: var(--muted); }
+.savings-icon { font-size: var(--text-20); margin-right: var(--sp-2); }
+.micro-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--text-12);
+}
+.bars { margin: var(--sp-4) 0; display: grid; gap: var(--sp-2); }
+.bar-row { display: grid; gap: var(--sp-1); }
+.bar-label { font-size: var(--text-12); color: var(--muted); }
+.bar-track {
+  height: var(--sp-2);
+  background: var(--line);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.bar { height: 100%; border-radius: var(--radius-pill); }
+.bar-ceiling { background: var(--muted); }
+.bar-jap { background: var(--accent); }
+
 /* Desktop: two-column NPPA/JAP layout with a center divider. */
 @media (min-width: 48rem) {
   body { max-width: 60rem; }
