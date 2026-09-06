@@ -22,7 +22,7 @@
   <div class="price-grid">
     <section class="side nppa" aria-label="NPPA ceiling price">
       <h2 class="micro-label"><svg class="icon icon-16" aria-hidden="true"><use href="#icon-shield-check"/></svg> NPPA ceiling</h2>
-      <p class="price price-reference"><svg class="icon icon-16" aria-hidden="true"><use href="#icon-rupee"/></svg> {{ payload.nppa_side.ceiling_per_unit_inr|inr }} <span class="per">per unit</span></p>
+      <p class="price price-reference"><use href="#icon-rupee"/></svg> {{ payload.nppa_side.ceiling_per_unit_inr|inr }} <span class="per">per unit</span></p>
       <dl>
         <dt>Unit basis</dt><dd>{{ payload.nppa_side.unit_basis }} ({{ payload.nppa_side.qualifier_raw }})</dd>
         <dt>NLEM version</dt><dd>{{ payload.nppa_side.nlem_version }}</dd>
@@ -32,7 +32,7 @@
     <div class="price-divider" aria-hidden="true"></div>
     <section class="side jap" aria-label="Jan Aushadhi price">
       <h2 class="micro-label"><svg class="icon icon-16" aria-hidden="true"><use href="#icon-pill"/></svg> Jan Aushadhi</h2>
-      <p class="price price-primary"><svg class="icon icon-20" aria-hidden="true"><use href="#icon-rupee"/></svg> {{ payload.jap_side.per_unit_inr|inr }} <span class="per">per unit</span></p>
+      <p class="price price-primary"><use href="#icon-rupee"/></svg> {{ payload.jap_side.per_unit_inr|inr }} <span class="per">per unit</span></p>
       <dl>
         <dt>Product</dt><dd>{{ payload.jap_side.generic_name }}</dd>
         <dt>Pack</dt><dd>{{ payload.jap_side.pack_raw }} (parsed: {{ payload.jap_side.pack_parsed }})</dd>
