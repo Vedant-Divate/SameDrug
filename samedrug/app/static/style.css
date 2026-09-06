@@ -229,6 +229,29 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   cursor: pointer;
 }
 .search-box button:hover { box-shadow: var(--shadow-2); }
+.search-box { position: relative; }
+
+/* 4b. Live-suggestion dropdown (built by app.js; absent without JS). */
+.suggest-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin-top: var(--sp-1);
+  background: var(--overlay);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-3);
+  overflow: hidden;
+}
+.suggest-list[hidden] { display: none; }
+.suggest-item {
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--text-14);
+  cursor: pointer;
+}
+.suggest-item:hover, .suggest-item.active { background: var(--success-bg); }
 
 .pitch { font-size: var(--text-20); }
 .db-note, .notice, .fuzzy-note { color: var(--muted); }
