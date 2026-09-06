@@ -735,6 +735,7 @@ ALIASES: dict[str, str] = {
     "s(-)amlodipine": "amlodipine",
     "s-amlodipine": "amlodipine",
     "levo-thyroxine": "levothyroxine",
+    "thyroxine": "levothyroxine",
     "cetrizine": "cetirizine",
     "nimesulid": "nimesulide",
     "medroxyprogesteroneacetate": "medroxyprogesterone acetate",
