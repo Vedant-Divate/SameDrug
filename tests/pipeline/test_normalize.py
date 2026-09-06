@@ -1,14 +1,17 @@
 """Golden suites for the Phase 3 normalization engine.
 
-Every strength/form/pack case below is a REAL row measured from the seed
-database (source id cited in comments); synthetic edge rows are labeled.
+Every strength/form/pack/composition case below is a REAL row measured
+from the seed database (source id cited in comments); synthetic edge rows
+are labeled.
 """
 
 import pytest
 
 from samedrug.pipeline.normalize import (
     canonical_form,
+    canonical_molecules,
     clean_text,
+    extract_jap_composition,
     extract_modifiers,
     fold,
     form_family,
@@ -16,6 +19,7 @@ from samedrug.pipeline.normalize import (
     parse_pack,
     parse_strength,
     parse_strength_parts,
+    split_nppa_molecules,
 )
 
 # ---------------------------------------------------------------------------
@@ -263,3 +267,150 @@ def test_make_key_pairs_preferred():
     assert key.key() == "budesonide:0.2mg+formoterol:0.006mg|inhaler"
     unknown = make_key(["water for injection"], [None], "injection")
     assert unknown.key() == "water for injection:|injection"
+
+
+# ---------------------------------------------------------------------------
+# JAP composition goldens: (product_id, molecules, strengths, form_raw,
+# modifiers); all from data/processed/drugs.db jap_products.
+# ---------------------------------------------------------------------------
+
+COMPOSITION_GOLDENS: list[tuple[int, str, tuple, tuple, str | None, tuple]] = [
+    (242, "Ibuprofen Tablets IP 200 mg",
+     ("Ibuprofen",), ("200mg",), "Tablets", ()),
+    (1, "Aceclofenac 100mg and Paracetamol 325mg Tablets",
+     ("Aceclofenac", "Paracetamol"), ("100mg", "325mg"), "Tablets", ()),
+    (189, "Metformin Hydrochloride Sustained Release Tablets IP 1000 mg",
+     ("Metformin Hydrochloride",), ("1000mg",), "Tablets",
+     ("sustained_release",)),
+    (886, "Paracetamol Paediatric Oral Suspension IP 125 mg per 5 ml",
+     ("Paracetamol",), ("25mg/ml",), "Oral Suspension", ()),
+    (822, "Rabeprazole 20mg (Enteric Coated) and Domperidone 30mg"
+          " (Sustained Release) Capsules",
+     ("Rabeprazole", "Domperidone"), ("20mg", "30mg"), "Capsules",
+     ("enteric_coated", "sustained_release")),
+    (1899, "Formoterol 6mcg and Budesonide 200mcg Rotacaps",
+     ("Formoterol", "Budesonide"), ("0.006mg", "0.2mg"), "Rotacaps", ()),
+    (1804, "Combipack of Mifepristone Tablets IP 200mg\u00a0 (1 Tablet)"
+           " & Misoprostol Tablets IP 200mcg (4 Tablets)",
+     ("Mifepristone", "Misoprostol"), ("200mg", "0.2mg"), "Tablets", ()),
+    (1679, "Lignocaine and Adrenaline Injection IP (2%w/v and 1:80000)",
+     ("Lignocaine", "Adrenaline"), ("2%wv", None), "Injection", ()),
+    (1928, "Cefoperazone Injection IP 1 g",
+     ("Cefoperazone",), ("1000mg",), "Injection", ()),
+    # JAP pid 162 carries U+00A0 between Olmesartan and 20mg (NBSP trap).
+    (162, "Olmesartan\u00a020mg, Amlodipine 5mg and Hydrochlorothiazide 12.5mg"
+          " Tablets",
+     ("Olmesartan", "Amlodipine", "Hydrochlorothiazide"),
+     ("20mg", "5mg", "12.5mg"), "Tablets", ()),
+    (2118, "Aspirin Enteric Coated Tablets IP 75mg",
+     ("Aspirin",), ("75mg",), "Tablets", ("enteric_coated",)),
+    (361, "Formoterol Fumarate 6mcg and Budesonide 200mcg Inhaler",
+     ("Formoterol Fumarate", "Budesonide"), ("0.006mg", "0.2mg"),
+     "Inhaler", ()),
+    (2078, "Water for Injection amp polypack 5 ml",
+     ("Water for Injection",), (None,), "polypack", ()),
+    (191, "Janaushadhi Nirmal (Nicotine Polacrilex Chewing Gum 2 mg))",
+     ("Nicotine Polacrilex",), ("2mg",), "Chewing Gum", ()),
+    (2312, "Co-trimoxazole (Sulphamethoxazole 100mg and Trimethoprim 20mg)"
+           " Tablets IP",
+     ("Sulphamethoxazole", "Trimethoprim"), ("100mg", "20mg"), "Tablets", ()),
+]
+
+
+@pytest.mark.parametrize(
+    ("pid", "name", "molecules", "strengths", "form", "modifiers"),
+    COMPOSITION_GOLDENS,
+)
+def test_extract_jap_composition_goldens(
+    pid, name, molecules, strengths, form, modifiers
+):
+    import sqlite3
+    from pathlib import Path
+
+    seed = Path(__file__).parent.parent.parent / "data" / "raw"
+    if seed.exists():  # pin the golden to the real seed row when present
+        with sqlite3.connect(seed.parent / "processed" / "drugs.db") as conn:
+            row = conn.execute(
+                "SELECT generic_name FROM jap_products WHERE product_id = ?",
+                (pid,),
+            ).fetchone()
+            assert row is not None and row[0] == name
+    comp = extract_jap_composition(name)
+    assert comp.ok, comp.notes
+    assert comp.molecules == molecules
+    assert comp.strengths == strengths
+    assert comp.form_raw == form
+    assert comp.modifiers == modifiers
+
+
+def test_extract_jap_composition_ratio_flags_low_confidence():
+    # JAP pid 1679: ratio component kept raw, never faked, flagged.
+    comp = extract_jap_composition(
+        "Lignocaine and Adrenaline Injection IP (2%w/v and 1:80000)")
+    assert comp.ok and comp.low_confidence
+    assert comp.strengths == ("2%wv", None)
+
+
+def test_extract_jap_composition_complex_routing():
+    # JAP pid 993 Vitamin B-Complex + pid 1907 Menthol +/- mix.
+    assert extract_jap_composition(
+        "Vitamin B-Complex Tablets (B1 10mg, B2 10mg)").reason == (
+        "complex_composition")
+    assert extract_jap_composition(
+        "Menthol (55 mg ± 5.) Cinnamon Capsules").reason == (
+        "complex_composition")
+
+
+ALIAS_GOLDENS: list[tuple[str, str]] = [
+    ("acetylsalicylic acid", "aspirin"),
+    ("frusemide", "furosemide"),
+    ("formoteral", "formoterol"),
+    ("amoxycillin", "amoxicillin"),
+    ("metformin hydrochloride", "metformin"),
+    ("s(-)amlodipine", "amlodipine"),
+    ("s(-) amlodipine", "amlodipine"),
+    ("levo-thyroxine", "levothyroxine"),
+    ("cetrizine", "cetirizine"),
+    ("nimesulid", "nimesulide"),
+    ("medroxyprogesteroneacetate", "medroxyprogesterone acetate"),
+    ("amlodipine besilate", "amlodipine"),
+    ("diclofenac diethylamine", "diclofenac"),
+    ("losartan potassium", "losartan"),
+    ("formoterol fumarate dihydrate", "formoterol"),
+    # Guards: base-name words that merely end in salt-like syllables stay.
+    ("calcium phosphate", "calcium phosphate"),
+    ("hydrochlorothiazide", "hydrochlorothiazide"),
+    ("sodium valproate", "sodium valproate"),
+    ("sodium chloride", "sodium chloride"),
+]
+
+
+@pytest.mark.parametrize(("raw", "expected"), ALIAS_GOLDENS)
+def test_canonical_molecules_aliases(raw, expected):
+    assert canonical_molecules([raw]) == [expected]
+
+
+def test_canonical_molecules_plain_keeps_prealias_form():
+    # Stage-1 keys use cleaned but unaliased molecules.
+    assert canonical_molecules(["Acetylsalicylic Acid"]) == ["aspirin"]
+    assert canonical_molecules(["Acetylsalicylic Acid"], use_alias=False) == [
+        "acetylsalicylic acid"]
+
+
+NPPA_SPLIT_GOLDENS: list[tuple[str, int | None, list[str]]] = [
+    ("Glucose (A) +\nSodium Chloride (B)", None,
+     ["Glucose", "Sodium Chloride"]),
+    ("CO-TRIMOXAZOLE (SULPHAMETHOXAZOLE(A)+TRIMETHOPRIM(B)]", None,
+     ["SULPHAMETHOXAZOLE", "TRIMETHOPRIM"]),
+    ("Artesunate (A) + Sulphadoxine -Pyrimethamine (B)", 3,
+     ["Artesunate", "Sulphadoxine", "Pyrimethamine"]),
+    ("AMPHOTERICIN B - LIPOSOMAL", 1, ["AMPHOTERICIN B - LIPOSOMAL"]),
+    ("ASCORBIC ACID (VITAMIN C)", None, ["ASCORBIC ACID"]),
+    ("PHYTOMENADIONE (VITAMINK1)10 MG", None, ["PHYTOMENADIONE"]),
+    ("Lignocaine (A)+Adrenaline (B)", None, ["Lignocaine", "Adrenaline"]),
+]
+
+
+@pytest.mark.parametrize(("raw", "n", "expected"), NPPA_SPLIT_GOLDENS)
+def test_split_nppa_molecules_goldens(raw, n, expected):
+    assert split_nppa_molecules(raw, n) == expected

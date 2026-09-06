@@ -1274,16 +1274,6 @@ def extract_jap_composition(generic_name: str) -> JapComposition:
             single_brand = (len(chunks) == 1
                             and outer_bare.casefold().startswith("janaushadhi")
                             and _STRENGTH_TOKEN_RE.search(chunks[0]))
-            if (len(chunks) >= 2 and not single_brand and all(
-                    _STRENGTH_TOKEN_RE.search(c) or _RATIO_RE.search(c)
-                    for c in chunks)):
-                # Multi-part group spanning several molecules ("2%w/v and
-                # 1:80000" for Lignocaine/Adrenaline): defer to the global
-                # positional assignment below instead of binding it whole.
-                deferred_global.append(content)
-                notes.append(f"deferred multi-part parens {content!r}")
-                idx += 1
-                continue
             if (len(chunks) >= 2
                     and all(_STRENGTH_TOKEN_RE.search(c) for c in chunks)) \
                     or single_brand:
@@ -1306,6 +1296,16 @@ def extract_jap_composition(generic_name: str) -> JapComposition:
                                           "; ".join(notes), False,
                                           "complex_composition")
                 continue  # reprocess the spliced-in first chunk
+            if len(chunks) >= 2 and all(
+                    _STRENGTH_TOKEN_RE.search(c) or _RATIO_RE.search(c)
+                    for c in chunks):
+                # Multi-part group spanning several molecules ("2%w/v and
+                # 1:80000" for Lignocaine/Adrenaline): defer to the global
+                # positional assignment below instead of binding it whole.
+                deferred_global.append(content)
+                notes.append(f"deferred multi-part parens {content!r}")
+                idx += 1
+                continue
             notes.append(f"single strength parens {content!r}")
             seg_strength[idx] = content
         idx += 1
