@@ -1,0 +1,16 @@
+# Keep the image lean: runtime needs only installed deps + samedrug/ +
+# data/processed/drugs.db (copied explicitly in the Dockerfile).
+.venv/
+.git/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+tests/
+data/raw/
+data/interim/
+docs/
+.github/
+.env
+*.log
+body.json
