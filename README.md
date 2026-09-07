@@ -9,6 +9,8 @@ Drug price transparency for India: NPPA ceiling prices vs Jan Aushadhi equivalen
 ![SQLite](https://img.shields.io/badge/SQLite-read--only-003B57.svg)
 [![ci](https://github.com/Vedant-Divate/SameDrug/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Vedant-Divate/SameDrug/actions/workflows/ci.yml)
 
+**Try it: https://samedrug.onrender.com/**
+
 ![Equivalence card: NPPA ceiling vs Jan Aushadhi price with savings and provenance](docs/screenshots/card.png)
 <!--
 Screenshot plan (docs/screenshots/):
@@ -53,11 +55,16 @@ Known data-quality findings, kept visible rather than smoothed over: 387 zero-MR
 
 ## Architecture
 
-```
-NPPA export ─┐
-             ├─▶ download ─▶ parse ─▶ normalize + match ─▶ SQLite ─▶ FastAPI ─▶ Jinja2 UI
-JAP API ─────┘  (2 req)      (69-qualifier                       (read-only)    (zero-JS
-                              grammar)                             302 equiv      functional)
+```mermaid
+flowchart TD
+    NPPA[NPPA CSV export] --> Parse[Parse]
+    JAP[JAP API - 2 req] --> Parse
+    Parse --> Norm[Normalize]
+    Norm --> Match[Match ladder]
+    Match --> DB[(SQLite - 302 equiv)]
+    DB --> API[FastAPI read-only]
+    API --> UI[Jinja2 UI zero-JS]
+    UI --> Render[Render free tier]
 ```
 
 ```
@@ -113,7 +120,7 @@ Acquiring the seeds (`data/raw/` is gitignored by design): JAP via the live 2-re
 | Status | Item |
 |---|---|
 | Done | Pipeline, normalization engine, read API, server-rendered UI, audit culture (302 equivalents, 308 tests) |
-| Next | Docker image + deploy (Phase 6) |
+| Done | Docker image + live deploy (Render free tier: https://samedrug.onrender.com/) |
 | Next | Data-refresh automation with staleness alarms |
 | Next | Brand-alias table for search (Dolo → paracetamol, …) |
 | Next | Coverage backlog: vitamin D3/cholecalciferol, pack-variant injections, form-family review |
@@ -122,7 +129,17 @@ No dates — sequencing only.
 
 ## Deployment
 
-SameDrug ships as a Docker image to GHCR on every push to `main` (see `.github/workflows/docker.yml`). To go live, follow the human runbook in [`deploy.md`](deploy.md): Render free-tier web service on the Docker runtime, health check at `/health`, no secrets needed — the database is baked into the image. Alternatives (Fly.io, Hugging Face Spaces, self-hosted VPS) are covered there too.
+SameDrug is **live at https://samedrug.onrender.com/** (Render free-tier web service on the Docker runtime, health check at `/health`, no secrets — the database is baked into the image). Free tier sleeps after ~15 min idle, so the first visit cold-starts in ~30 s. It ships as a Docker image to GHCR on every push to `main` (see `.github/workflows/docker.yml`); the full human runbook lives in [`deploy.md`](deploy.md), including Fly.io, Hugging Face Spaces, and self-hosted alternatives.
+
+## Future scopes
+
+- Brand-alias table for search (Dolo → paracetamol, etc.)
+- Coverage backlog: vitamin D3/cholecalciferol, carboxymethylcellulose typo, paracetamol 150mg injection variants
+- Automated data-refresh workflow with staleness alarms (weekly JAP re-pull; NPPA manual export remains human)
+- Serve-only Docker image split (~40 MB smaller)
+- NPPA Para-5 order-feed crawler for incremental updates
+- Automated cross-validation against the 5 category PDFs
+- The 2 fuzzy-review-queue candidates awaiting human ruling (omeprazole vs esomeprazole; carboxymethylcellulose typo)
 
 ## License + disclaimer
 
