@@ -7,7 +7,7 @@ Drug price transparency for India: NPPA ceiling prices vs Jan Aushadhi equivalen
 ![Tests 308 passing](https://img.shields.io/badge/Tests-308%20passing-brightgreen.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-powered-009688.svg)
 ![SQLite](https://img.shields.io/badge/SQLite-read--only-003B57.svg)
-<!-- TODO(Phase 6): add CI badge once the build-and-push workflow exists. -->
+[![ci](https://github.com/Vedant-Divate/SameDrug/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Vedant-Divate/SameDrug/actions/workflows/ci.yml)
 
 ![Equivalence card: NPPA ceiling vs Jan Aushadhi price with savings and provenance](docs/screenshots/card.png)
 <!--
@@ -119,6 +119,10 @@ Acquiring the seeds (`data/raw/` is gitignored by design): JAP via the live 2-re
 | Next | Coverage backlog: vitamin D3/cholecalciferol, pack-variant injections, form-family review |
 
 No dates — sequencing only.
+
+## Deployment
+
+SameDrug ships as a Docker image to GHCR on every push to `main` (see `.github/workflows/docker.yml`). To go live, follow the human runbook in [`deploy.md`](deploy.md): Render free-tier web service on the Docker runtime, health check at `/health`, no secrets needed — the database is baked into the image. Alternatives (Fly.io, Hugging Face Spaces, self-hosted VPS) are covered there too.
 
 ## License + disclaimer
 
